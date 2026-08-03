@@ -1,0 +1,1 @@
+from .methods import install_wmi_persistence, install_scheduled_task, install_systemd_service

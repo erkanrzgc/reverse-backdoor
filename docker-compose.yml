@@ -3,7 +3,7 @@ version: '3.8'
 services:
   c2-server:
     build: .
-    container_name: cyberm4fia-c2
+    container_name: reverse-backdoor-c2
     ports:
       - "5555:5555"
     volumes:

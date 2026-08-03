@@ -1,11 +1,9 @@
 import os
 
-from server.ui.banner import print_gradient_banner
 from server.ui.prompt import print_colored
 
 
 def handle_help():
-    print_gradient_banner()
     help_text = '''
   [ SYSTEM ]
     quit                        Terminate Session

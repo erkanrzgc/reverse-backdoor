@@ -1,10 +1,9 @@
 import os
 import socket
 import platform as pf
-import subprocess
 
 
-def get_sysinfo(platform, sock):
+def get_sysinfo(platform):
     info_list = []
     try:
         uname = pf.uname()

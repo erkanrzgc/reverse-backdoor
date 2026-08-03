@@ -32,12 +32,14 @@ def load_config():
     except Exception:
         pass
 
-    bind_host = env.get('CYBERM4FIA_BIND_HOST') or defaults.get('bind_host', '0.0.0.0')
-    bind_port = int(env.get('CYBERM4FIA_BIND_PORT') or defaults.get('bind_port', 5555))
-    loot_dir = env.get('CYBERM4FIA_LOOT_DIR') or defaults.get('loot_dir', './loot')
+    bind_host = env.get('REVERSE_BACKDOOR_BIND_HOST') or defaults.get('bind_host', '0.0.0.0')
+    bind_port = int(env.get('REVERSE_BACKDOOR_BIND_PORT') or defaults.get('bind_port', 5555))
+    loot_dir = env.get('REVERSE_BACKDOOR_LOOT_DIR') or defaults.get('loot_dir', './loot')
+    encryption = env.get('REVERSE_BACKDOOR_ENCRYPTION', '').lower() == 'true'
 
     return {
         'bind_host': bind_host,
         'bind_port': bind_port,
         'loot_dir': loot_dir,
+        'encryption': encryption,
     }

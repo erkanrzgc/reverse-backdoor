@@ -32,12 +32,14 @@ def load_config():
     except Exception:
         pass
 
-    server_host = env.get('CYBERM4FIA_SERVER_HOST') or defaults.get('server_host', '127.0.0.1')
-    server_port = int(env.get('CYBERM4FIA_SERVER_PORT') or defaults.get('server_port', 5555))
-    reconnect = int(env.get('CYBERM4FIA_RECONNECT_INTERVAL') or defaults.get('reconnect_interval', 5))
+    server_host = env.get('REVERSE_BACKDOOR_SERVER_HOST') or defaults.get('server_host', '127.0.0.1')
+    server_port = int(env.get('REVERSE_BACKDOOR_SERVER_PORT') or defaults.get('server_port', 5555))
+    reconnect = int(env.get('REVERSE_BACKDOOR_RECONNECT_INTERVAL') or defaults.get('reconnect_interval', 5))
+    encryption = env.get('REVERSE_BACKDOOR_ENCRYPTION', '').lower() == 'true'
 
     return {
         'server_host': server_host,
         'server_port': server_port,
         'reconnect_interval': reconnect,
+        'encryption': encryption,
     }
