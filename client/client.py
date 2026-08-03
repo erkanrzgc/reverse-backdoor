@@ -13,8 +13,8 @@ def main():
     config = load_config()
     platform = get_platform()
 
-    def shell_callback(sock, encryption):
-        handle_session(sock, platform, encryption)
+    def shell_callback(sock, encryption, tls):
+        handle_session(sock, platform, encryption, tls, config['auto_bypass'])
 
     try:
         connect_and_run(
@@ -23,6 +23,7 @@ def main():
             shell_callback,
             config['reconnect_interval'],
             config['encryption'],
+            config['tls'],
         )
     except KeyboardInterrupt:
         sys.exit()

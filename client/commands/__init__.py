@@ -8,6 +8,11 @@ from client.commands.keylogger_commands import KeylogStartCommand, KeylogDumpCom
 from client.commands.credential_commands import WifiDumpCommand, BrowserCredsCommand
 from client.commands.persistence_commands import PersistenceCommand
 from client.commands.session_commands import QuitCommand, BackgroundCommand, HelpCommand, ClearCommand, TerminateCommand, SendallCommand
+from client.commands.stealth_commands import (
+    EvasionCommand, DetectVMCommand, InjectCommand, StealTokenCommand,
+    RevertTokenCommand, WhoamiCommand, EnablePrivilegeCommand,
+    ClearLogsCommand, TimestompCommand, SelfDeleteCommand,
+)
 
 
 def build_client_registry() -> CommandRegistry:
@@ -43,4 +48,14 @@ def build_client_registry() -> CommandRegistry:
     registry.register(ClearCommand())
     registry.register(TerminateCommand())
     registry.register(SendallCommand())
+    registry.register(EvasionCommand())
+    registry.register(DetectVMCommand())
+    registry.register(InjectCommand())
+    registry.register(StealTokenCommand())
+    registry.register(RevertTokenCommand())
+    registry.register(WhoamiCommand())
+    registry.register(EnablePrivilegeCommand())
+    registry.register(ClearLogsCommand())
+    registry.register(TimestompCommand())
+    registry.register(SelfDeleteCommand())
     return registry

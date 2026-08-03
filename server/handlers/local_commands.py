@@ -40,7 +40,22 @@ def handle_help():
     pkill <name>                Kill Process by Name
 
   [ PERSISTENCE ]
-    persistence <RegName> <FileName>   Install Persistence
+    persistence list                List available methods
+    persistence install <method>    Install persistence (crontab, registry, etc)
+    persistence remove <method>     Remove persistence
+    persistence check               Verify installed persistence
+
+  [ EVASION ]
+    evasion                       Apply AMSI+ETW bypasses (auto on connect)
+    detect_vm                     Detect VM/Sandbox
+    inject <pid|name> [shellcode] Inject shellcode into process
+    steal_token <pid>             Steal and impersonate process token
+    rev2self                      Revert to own token
+    whoami                        Show current user context
+    priv_enable <privilege>       Enable a token privilege
+    clear_logs                    Clear Windows/Linux event logs
+    timestomp <path>              Modify file timestamps
+    self_delete                   Delete agent binary on disk
 '''
     print_colored(help_text, 'cyan')
 

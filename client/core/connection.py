@@ -2,7 +2,7 @@ import socket
 import time
 
 
-def connect_and_run(host, port, shell_callback, reconnect_interval=5, encryption=False):
+def connect_and_run(host, port, shell_callback, reconnect_interval=5, encryption=False, tls=False):
     first_attempt = True
     while True:
         sock = None
@@ -16,10 +16,14 @@ def connect_and_run(host, port, shell_callback, reconnect_interval=5, encryption
             sock.connect((host, port))
             sock.settimeout(None)
 
+            if tls:
+                from client.core.tls import wrap_client_socket
+                sock = wrap_client_socket(sock, hostname=host)
+
             if encryption:
                 _client_key_exchange(sock)
 
-            shell_callback(sock, encryption)
+            shell_callback(sock, encryption, tls)
             if sock:
                 sock.close()
             break

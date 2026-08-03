@@ -36,10 +36,14 @@ def load_config():
     server_port = int(env.get('REVERSE_BACKDOOR_SERVER_PORT') or defaults.get('server_port', 5555))
     reconnect = int(env.get('REVERSE_BACKDOOR_RECONNECT_INTERVAL') or defaults.get('reconnect_interval', 5))
     encryption = env.get('REVERSE_BACKDOOR_ENCRYPTION', '').lower() == 'true'
+    tls = env.get('REVERSE_BACKDOOR_TLS', '').lower() == 'true'
+    auto_bypass = env.get('REVERSE_BACKDOOR_AUTO_BYPASS', 'true').lower() == 'true'
 
     return {
         'server_host': server_host,
         'server_port': server_port,
         'reconnect_interval': reconnect,
         'encryption': encryption,
+        'tls': tls,
+        'auto_bypass': auto_bypass,
     }

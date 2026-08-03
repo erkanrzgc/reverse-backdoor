@@ -36,10 +36,12 @@ def load_config():
     bind_port = int(env.get('REVERSE_BACKDOOR_BIND_PORT') or defaults.get('bind_port', 5555))
     loot_dir = env.get('REVERSE_BACKDOOR_LOOT_DIR') or defaults.get('loot_dir', './loot')
     encryption = env.get('REVERSE_BACKDOOR_ENCRYPTION', '').lower() == 'true'
+    tls = env.get('REVERSE_BACKDOOR_TLS', '').lower() == 'true'
 
     return {
         'bind_host': bind_host,
         'bind_port': bind_port,
         'loot_dir': loot_dir,
         'encryption': encryption,
+        'tls': tls,
     }
