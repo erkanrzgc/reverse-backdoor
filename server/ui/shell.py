@@ -99,7 +99,10 @@ class AgentShell:
                     continue
 
                 if command == 'background':
-                    print_colored(f'[+] {self._agent_id} backgrounded', 'cyan')
+                    from server.core.background import BackgroundManager
+                    bg = BackgroundManager()
+                    bg.background(self._ctx, self._agent_id)
+                    print_colored(f'[+] {self._agent_id} backgrounded — queue tasks with "queue {self._agent_id} <cmd>"', 'cyan')
                     break
 
                 result = self._router.dispatch(self._ctx, command)
