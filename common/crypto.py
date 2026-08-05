@@ -6,6 +6,8 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 
 class ECDHEncryption:
+    PUBLIC_KEY_SIZE = 32
+
     def __init__(self):
         self._private_key = X25519PrivateKey.generate()
         self._shared_key: bytes = None

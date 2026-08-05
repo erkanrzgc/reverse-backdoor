@@ -187,5 +187,6 @@ class AgentShell:
 
 def build_master_completer():
     comp = C2Completer()
-    comp.set_commands(['agents', 'interact', 'broadcast', 'help', 'exit', 'quit', 'listeners'])
+    comp.set_commands(['agents', 'interact', 'broadcast', 'help', 'exit', 'quit',
+                       'listeners', 'queue', 'tasks', 'results', 'logs'])
     return comp

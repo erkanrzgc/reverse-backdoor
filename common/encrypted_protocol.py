@@ -16,13 +16,25 @@ class EncryptedProtocol:
         self._send_lock = threading.Lock()
         self._crypto = ECDHEncryption()
 
-    def perform_key_exchange(self) -> None:
-        peer_pub = self.sock.recv(1024)
+    def perform_key_exchange(self, initiator: bool = False) -> None:
+        if initiator:
+            self.sock.sendall(self._crypto.public_key_bytes)
+            peer_pub = self._recv_exact(self._crypto.PUBLIC_KEY_SIZE)
+        else:
+            peer_pub = self._recv_exact(self._crypto.PUBLIC_KEY_SIZE)
+            self.sock.sendall(self._crypto.public_key_bytes)
         if not peer_pub:
             raise ConnectionError("Connection closed during key exchange")
-        own_pub = self._crypto.public_key_bytes
-        self.sock.sendall(own_pub)
         self._crypto.compute_shared_key(peer_pub)
+
+    def _recv_exact(self, n: int) -> bytes:
+        data = b''
+        while len(data) < n:
+            chunk = self.sock.recv(n - len(data))
+            if not chunk:
+                break
+            data += chunk
+        return data
 
     def send(self, data: Any) -> None:
         if not self._crypto.is_ready():

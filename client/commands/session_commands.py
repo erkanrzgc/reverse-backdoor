@@ -8,8 +8,7 @@ class QuitCommand(Command):
     name = 'quit'
 
     def execute(self, ctx, raw: str):
-        from client.core.protocol import Protocol
-        Protocol(ctx.sock).send('[+] Session terminated')
+        ctx.protocol.send('[+] Session terminated')
         return False
 
 

@@ -26,7 +26,16 @@ def handle_session(sock_or_protocol, platform, encryption=False, tls=False,
     try:
         while True:
             command = protocol.recv()
-            command = command.strip() if isinstance(command, str) else str(command)
+            if command is None:
+                continue
+            if isinstance(command, dict):
+                command = command.get('command', '')
+            elif isinstance(command, (list, int, float)):
+                command = ''
+            else:
+                command = str(command).strip()
+            if not command:
+                continue
             result = registry.dispatch(ctx, command)
             if result is False:
                 break
@@ -46,5 +55,5 @@ def handle_session(sock_or_protocol, platform, encryption=False, tls=False,
 def _build_encrypted(sock):
     from client.core.encrypted_protocol import EncryptedProtocol
     proto = EncryptedProtocol(sock)
-    proto.perform_key_exchange()
+    proto.perform_key_exchange(initiator=True)
     return proto

