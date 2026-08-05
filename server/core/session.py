@@ -4,8 +4,9 @@ from server.core.background import BackgroundManager
 from server.commands import build_server_router
 from server.commands.base import ServerSessionContext
 from server.ui.prompt import print_colored, highlight_output, bold, cyan, green, yellow, red, dim
-from server.ui.completer import C2Completer, setup_readline, save_history
+from server.ui.completer import setup_readline, save_history
 from server.ui.shell import AgentShell
+from common.logging import get_logger
 import os
 
 
@@ -20,6 +21,11 @@ def _init_stores(loot_dir: str):
         _audit_logger = AuditLogger(loot_dir)
         _loot_manager = LootManager(loot_dir)
         _credential_store = CredentialStore(loot_dir)
+    log_dir = os.path.join(loot_dir, 'logs')
+    logger = get_logger()
+    if logger._per_agent_dir is None:
+        logger.set_agent_log_dir(log_dir)
+        logger.add_console_handler()
     return _audit_logger, _loot_manager, _credential_store
 
 
@@ -230,6 +236,37 @@ def run_master_loop(loot_dir, encryption=False):
                             print(f'    {highlight_output(str(t.result)[:200])}')
             continue
 
+        if command.startswith('logs'):
+            self_l = get_logger()
+            args = command[4:].strip()
+            if not args:
+                summary = self_l.command_summary()
+                if not summary:
+                    print(dim('  (no commands logged yet)'))
+                else:
+                    from server.ui.prompt import format_table
+                    headers = ['Agent', 'Commands', 'OK', 'Errors', 'Unique']
+                    rows = [[aid, str(s['total']), str(s['ok']), str(s['error']), str(s['unique_commands'])]
+                            for aid, s in summary.items()]
+                    print(format_table(headers, rows))
+            else:
+                n = 20
+                parts = args.split()
+                aid = parts[0]
+                if len(parts) > 1:
+                    try:
+                        n = int(parts[1])
+                    except ValueError:
+                        pass
+                entries = self_l.get_recent_commands(aid, n)
+                if not entries:
+                    print(dim(f'  (no logs for {aid})'))
+                else:
+                    for e in entries:
+                        status_color = green if e.status == 'ok' else red
+                        print(f'  {dim(e.timestamp.strftime("%H:%M:%S"))} {status_color(e.status):5} {cyan(e.command[:50]):50} {yellow(f"{e.response_size}b"):>8} {dim(f"{e.duration_ms}ms")}')
+            continue
+
         if command == 'help':
             print(f'''
   {bold('Master Commands:')}
@@ -239,6 +276,7 @@ def run_master_loop(loot_dir, encryption=False):
     {cyan('queue <id> <cmd>')}       Queue async command for backgrounded agent
     {cyan('tasks')}                  Show all backgrounded agent tasks
     {cyan('results <id> [task]')}   View task results
+    {cyan('logs [agent-id] [n]')}   Show command log summary or per-agent log
     {cyan('help')}                   Show this help
     {cyan('exit / quit')}            Shutdown server
 
@@ -249,11 +287,16 @@ def run_master_loop(loot_dir, encryption=False):
     4. queue agent-1 sysinfo    → fires async, shows task #
     5. tasks                    → see all pending/completed tasks
     6. results agent-1 5       → view task #5 output
+
+  {bold('Logging:')}
+    logs                     → summary table per agent
+    logs agent-1             → last 20 commands for agent-1
+    logs agent-1 50          → last 50 commands for agent-1
 ''')
             continue
 
         if command == 'listeners':
-            print_colored(f'[*] Active listener on port...', 'cyan')
+            print_colored('[*] Active listener on port...', 'cyan')
             continue
 
         print_colored(f'[-] Unknown: {command}. Type help.', 'red')

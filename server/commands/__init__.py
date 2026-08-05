@@ -1,6 +1,9 @@
 from server.core.command_router import ServerCommandRouter
 from server.commands.system_commands import HelpCommand, ClearCommand, QuitCommand
-from server.commands.transfer_commands import UploadCommand, DownloadCommand, ScreenshotCommand, WebcamCommand
+from server.commands.transfer_commands import (
+    UploadCommand, DownloadCommand, DownloadLargeCommand,
+    ScreenshotCommand, WebcamCommand,
+)
 
 
 def build_server_router() -> ServerCommandRouter:
@@ -10,6 +13,7 @@ def build_server_router() -> ServerCommandRouter:
     router.register(QuitCommand())
     router.register(UploadCommand())
     router.register(DownloadCommand())
+    router.register(DownloadLargeCommand())
     router.register(ScreenshotCommand())
     router.register(WebcamCommand())
     return router

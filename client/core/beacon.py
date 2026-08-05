@@ -3,7 +3,7 @@ import random
 import threading
 import collections
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, Callable
 
 

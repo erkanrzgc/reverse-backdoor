@@ -1,20 +1,34 @@
 # Changelog
 
-## [2.3.0] — Unreleased
+## [3.4.0] — 2026-08-05
 
 ### Added
-- Shared protocol layer (`common/`) — deduplicated Protocol/EncryptedProtocol/ECDHEncryption
-- Operator audit log (`loot/audit.jsonl`) — every command timestamped per agent
-- Loot organization by agent ID and date
-- Credential store (`loot/creds.db`) — structured SQLite storage for harvested credentials
-- Module status markers — `STATUS.md` for production-readiness tracking
-- CI pipeline — linting (ruff) + smoke test on push
-- Pinned dependency versions with hashes
+- **Structured logging system** (`common/logging.py`) — Logger singleton with per-agent log files
+- Command-response correlation: duration, response size, status (ok/error) logged per command
+- `logs` master command — summary table / per-agent history viewer
+- `logs <agent-id> [n]` — view last N commands for an agent
+- **Server-side chunked file download** — `ChunkedReceiver` with ordered reassembly + SHA256
+- `download_large <path> [chunk_size_kb]` command for large file transfers
+- **Privilege escalation commands** — `privesc_linux` (sudo/SUID/kernel/services), `privesc_windows` (UAC/services/unquoted paths/AlwaysInstallElevated)
+- **RAT control commands** — `keystroke`, `mouse`, `click`, `lock_screen`
+- **Full TUI implementation** (`server/tui.py`) — Textual-based panels, DataTable, RichLog, live agent refresh
+- **Test suite** — 15 unit tests covering protocol, logging, registry, imports, HTTP profiles
+- **Architecture docs** — `AGENTS.md` (dev conventions), `ARCHITECTURE.md` (directory map + flow)
+- Logging wired into AgentShell — every command timed and logged
 
 ### Changed
-- Client/server Protocol imports now delegate to `common/`
-- Server session writes structured audit events
-- `download`/`screenshot`/`webcam` output organized under `loot/<agent-id>/<date>/`
+- Updated STATUS.md — all modules re-evaluated, SOCKS5/LSASS/lateral now `beta`
+- Total command count: **57** (51 Python + 6 server-only)
+- Logging directory: `loot/logs/<agent_id>.log` (auto-created, rotating)
+
+## [3.3.0] — 2026-08-05
+
+### Added
+- **SOCKS5 proxy** (`pivot/socks5.py`) — RFC 1928 handshake + relay via C2 protocol
+- **LSASS dump** (`stealth/lsass.py`) — comsvcs.dll MiniDump technique
+- **Lateral movement** (`lateral/movement.py`) — PSExec, WMI, SSH spread + ping sweep
+- `lsass_dump`, `socks5`, `scan`, `psexec`, `ssh_spread` commands (5 added)
+- **Structured logging** (`common/logging.py`) — levels, rotation, file/console handlers
 
 ## [2.2.0] — 2026-08-04
 

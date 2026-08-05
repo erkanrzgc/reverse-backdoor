@@ -1,5 +1,4 @@
 import os
-import shutil
 
 from client.modules.persist.manager import PersistenceMethod, PersistenceResult, _copy_payload
 

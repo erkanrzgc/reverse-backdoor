@@ -3,7 +3,6 @@ import threading
 import ssl
 
 from server.ui.prompt import print_colored
-from server.core.agent_registry import AgentRegistry
 
 
 def _accept_loop(host, port, session_callback, encryption, tls, shutdown_event):

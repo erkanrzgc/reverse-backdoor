@@ -1,5 +1,4 @@
 import subprocess
-import os
 
 
 def check_sudo_exploits():

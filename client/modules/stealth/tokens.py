@@ -1,4 +1,5 @@
 import os
+import ctypes
 
 
 def steal_token_cmd(pid) -> str:
@@ -10,7 +11,6 @@ def steal_token_cmd(pid) -> str:
         return '[-] Invalid PID'
 
     import ctypes
-    from ctypes import wintypes
 
     try:
         kernel32 = ctypes.windll.kernel32
@@ -77,7 +77,7 @@ def whoami_cmd() -> str:
 def enable_privilege_cmd(priv: str) -> str:
     if os.name != 'nt':
         if os.geteuid() == 0:
-            return f'[+] Already root — all privileges available'
+            return '[+] Already root — all privileges available'
         return '[-] Privilege enable is Windows-only (use sudo on Linux)'
 
     import ctypes

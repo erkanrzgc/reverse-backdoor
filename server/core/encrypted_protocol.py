@@ -1,1 +1,0 @@
-from common.encrypted_protocol import EncryptedProtocol

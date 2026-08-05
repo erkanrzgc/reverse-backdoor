@@ -1,8 +1,6 @@
 """Malleable HTTP C2 profiles — configurable headers, URIs, behaviors."""
 
 from dataclasses import dataclass, field
-from typing import Optional
-import random
 
 
 @dataclass

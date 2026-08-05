@@ -160,7 +160,6 @@ def self_delete() -> str:
 
 
 def obfuscate_strings_in_memory():
-    import base64
     import random
 
     class ObfuscatedString:

@@ -22,7 +22,7 @@ class BashrcPersistence(PersistenceMethod):
                 with open(bashrc_path, 'r') as f:
                     content = f.read()
                 if payload_name in content:
-                    return PersistenceResult(True, 'bashrc', f'[+] Bashrc entry already exists')
+                    return PersistenceResult(True, 'bashrc', '[+] Bashrc entry already exists')
 
             with open(bashrc_path, 'a') as f:
                 f.write(f'\n# system update check\n{entry}')

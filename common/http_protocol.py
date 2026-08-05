@@ -107,7 +107,6 @@ class HttpC2Server:
 
     def start(self):
         from http.server import HTTPServer, BaseHTTPRequestHandler
-        import socket
 
         outgoing = self._outgoing
         incoming = self._incoming

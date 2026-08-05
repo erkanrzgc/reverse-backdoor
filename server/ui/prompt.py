@@ -1,5 +1,4 @@
 import shutil
-import os
 
 
 COLORS = {

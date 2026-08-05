@@ -71,7 +71,7 @@ WantedBy=multi-user.target
                 True, 'systemd',
                 f'[+] Systemd persistence installed: {service_name}',
                 payload_path,
-                f'Service enabled and started'
+                'Service enabled and started'
             )
         except Exception as e:
             return PersistenceResult(False, 'systemd', f'[-] Systemd error: {str(e)}')

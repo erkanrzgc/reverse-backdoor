@@ -1,6 +1,5 @@
 import os
 import readline
-import re
 from typing import Optional, Callable
 
 

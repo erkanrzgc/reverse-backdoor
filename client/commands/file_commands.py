@@ -1,6 +1,5 @@
 from client.commands.base import Command
 from client.modules.file_ops import list_dir, change_dir, current_dir, delete, move, read_file, touch
-from client.modules.shell import run_command
 
 
 class LsCommand(Command):

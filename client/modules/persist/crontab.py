@@ -58,7 +58,7 @@ class CrontabPersistence(PersistenceMethod):
                 True, 'crontab',
                 f'[+] Crontab persistence installed: {payload_name}',
                 payload_path,
-                f'@reboot entry created, verified'
+                '@reboot entry created, verified'
             )
         except Exception as e:
             return PersistenceResult(False, 'crontab', f'[-] Crontab error: {str(e)}')

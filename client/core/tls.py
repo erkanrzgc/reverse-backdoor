@@ -1,5 +1,4 @@
 import ssl
-import socket
 
 
 def create_ssl_context(certfile=None, keyfile=None, server_side=False, verify=True):

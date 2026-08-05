@@ -2,7 +2,7 @@ import os
 import time
 
 from server.ui.prompt import (
-    green, blue, cyan, yellow, red, dim, bold, magenta,
+    green, blue, cyan, yellow, dim, bold, magenta,
     print_colored, highlight_output,
 )
 from server.ui.completer import C2Completer, setup_readline, save_history
@@ -78,6 +78,8 @@ class AgentShell:
         self._history_file = history_file
 
     def run(self):
+        from common.logging import get_logger
+        logger = get_logger()
         try:
             while self._running:
                 prompt = self._build_prompt()
@@ -105,17 +107,30 @@ class AgentShell:
                     print_colored(f'[+] {self._agent_id} backgrounded — queue tasks with "queue {self._agent_id} <cmd>"', 'cyan')
                     break
 
+                t0 = time.time()
                 result = self._router.dispatch(self._ctx, command)
+                local_ms = int((time.time() - t0) * 1000)
                 if result is False:
                     self._running = False
+                    logger.log_command(self._agent_id, command, '',
+                                      response_size=0, duration_ms=local_ms, status='ok')
                     break
                 if result is True:
+                    logger.log_command(self._agent_id, command, '',
+                                      response_size=0, duration_ms=local_ms, status='ok')
                     continue
 
                 self._ctx.protocol.send(command)
                 try:
+                    t0 = time.time()
                     response = self._ctx.protocol.recv()
-                    print(highlight_output(str(response)))
+                    remote_ms = int((time.time() - t0) * 1000)
+                    response_str = str(response)
+                    print(highlight_output(response_str))
+                    status = 'error' if response_str.startswith('[-]') else 'ok'
+                    logger.log_command(self._agent_id, command, response_str,
+                                      response_size=len(response_str), duration_ms=remote_ms,
+                                      status=status)
                 except KeyboardInterrupt:
                     self._ctx.protocol.send('terminate')
                     print_colored('\n[-] Command Terminated', 'yellow')

@@ -1,7 +1,6 @@
 import os
 
 from client.commands.base import Command
-from client.modules.shell import run_command
 from client.modules.process_ops import sendall_command
 
 
