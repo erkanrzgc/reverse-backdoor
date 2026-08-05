@@ -1,1 +1,1 @@
-from .socks5 import SOCKS5Proxy
+from .socks5 import Socks5Relay, start_socks5
