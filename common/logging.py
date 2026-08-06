@@ -164,7 +164,7 @@ class _RotatingFileHandler:
                 pass
 
     def _rotate(self):
-        for i in range(self._backups - 1, 0, -1):
+        for i in range(self._backups, 0, -1):
             src = f'{self._path}.{i}' if i > 1 else self._path
             dst = f'{self._path}.{i + 1}'
             if os.path.exists(src):
@@ -172,11 +172,6 @@ class _RotatingFileHandler:
                     os.rename(src, dst)
                 except Exception:
                     pass
-        if os.path.exists(self._path):
-            try:
-                os.rename(self._path, f'{self._path}.1')
-            except Exception:
-                pass
 
 
 class _ConsoleHandler:

