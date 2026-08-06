@@ -14,6 +14,9 @@ from client.commands.stealth_commands import (
     ClearLogsCommand, TimestompCommand, SelfDeleteCommand,
     HollowCommand, MigrateCommand, LsassDumpCommand, Socks5Command,
     ScanCommand, PsexecCommand, SSHSprdCommand,
+    UnhookCommand, SyscallInjectCommand, EarlyBirdCommand,
+    PtieshCommand, StreamStartCommand, StreamStopCommand,
+    SamDumpCommand, BrowserDumpV2Command,
 )
 from client.commands.privesc_commands import PrivescLinuxCommand, PrivescWindowsCommand
 from client.commands.rat_commands import KeystrokeCommand, MouseCommand, ClickCommand, LockScreenCommand
@@ -70,6 +73,14 @@ def build_client_registry() -> CommandRegistry:
     registry.register(ScanCommand())
     registry.register(PsexecCommand())
     registry.register(SSHSprdCommand())
+    registry.register(UnhookCommand())
+    registry.register(SyscallInjectCommand())
+    registry.register(EarlyBirdCommand())
+    registry.register(PtieshCommand())
+    registry.register(StreamStartCommand())
+    registry.register(StreamStopCommand())
+    registry.register(SamDumpCommand())
+    registry.register(BrowserDumpV2Command())
     registry.register(PrivescLinuxCommand())
     registry.register(PrivescWindowsCommand())
     registry.register(KeystrokeCommand())

