@@ -74,6 +74,7 @@ def check_packed(filepath):
         return '[-] Windows-only operation'
     try:
         with open(filepath, 'r', errors='replace') as f:
-            return f'[+] Packed: {"PAYLOAD_B64" in f.read()}'
+        data = f.read()
+        return f'[+] Packed: {"{{{{PAYLOAD}}}}" in data or "PAYLOAD_B64" in data}'
     except Exception as e:
         return f'[-] Check failed: {e}'

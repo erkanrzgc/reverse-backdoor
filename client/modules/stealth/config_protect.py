@@ -43,33 +43,29 @@ class ConfigProtector:
             return self._obfuscate(plain)
 
     def decrypt_config(self, encrypted_str):
-        """Decrypt base64 string back to a config dict."""
         try:
             raw = base64.b64decode(encrypted_str)
         except Exception:
-            return json.loads(self._deobfuscate(encrypted_str).decode())
+            try:
+                return json.loads(self._deobfuscate(encrypted_str).decode())
+            except Exception:
+                return {}
         try:
             from Crypto.Cipher import AES
             from Crypto.Util.Padding import unpad
             iv, ct = raw[:16], raw[16:]
             plain = unpad(AES.new(self._key, AES.MODE_CBC, iv).decrypt(ct), AES.block_size)
         except Exception:
-            plain = self._deobfuscate(encrypted_str)
+            return {}
         return json.loads(plain.decode())
 
-    def _obfuscate(self, plain):
-        """Obfuscate plaintext with hash-XOR when pycryptodome is unavailable."""
-        import random
-        salt = str(random.randint(0, 0xFFFF))
-        key = hashlib.sha256((self._key.hex() + salt).encode()).digest()
-        obf = bytes([p ^ key[i % len(key)] for i, p in enumerate(plain)])
-        return salt + ':' + base64.b64encode(obf).decode()
-
     def _deobfuscate(self, data):
-        """Reverse _obfuscate."""
         if isinstance(data, bytes):
             data = data.decode(errors='replace')
-        salt, encoded = data.split(':', 1)
+        try:
+            salt, encoded = data.split(':', 1)
+        except ValueError:
+            return b''
         key = hashlib.sha256((self._key.hex() + salt).encode()).digest()
         return bytes([b ^ key[i % len(key)] for i, b in enumerate(base64.b64decode(encoded))])
 

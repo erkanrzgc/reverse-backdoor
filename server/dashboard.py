@@ -6,6 +6,8 @@ from fastapi.responses import HTMLResponse
 from server.core.agent_registry import AgentRegistry
 from common.logging import get_logger
 
+_loot_dir = "loot"
+
 _TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -124,7 +126,7 @@ async def stats():
     total_cmds = sum(s['total'] for s in summary.values())
     try:
         from server.core.audit import CredentialStore
-        cred_store = CredentialStore("loot")
+        cred_store = CredentialStore(_loot_dir)
         total_creds = cred_store.stats().get("total_credentials", 0)
     except Exception:
         total_creds = 0
@@ -189,5 +191,7 @@ async def ws_endpoint(ws: WebSocket):
 
 
 def run_dashboard(host: str = "0.0.0.0", port: int = 8080, loot_dir: str = "loot"):
+    global _loot_dir
+    _loot_dir = loot_dir
     import uvicorn
     uvicorn.run(app, host=host, port=port, log_level="warning")

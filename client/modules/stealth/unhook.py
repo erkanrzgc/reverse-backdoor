@@ -36,7 +36,7 @@ def unhook_ntdll():
                 continue
             raw_off = ctypes.c_uint32.from_address(sec + 20).value
             vir = ctypes.c_uint32.from_address(sec + 12).value
-            sz = ctypes.c_uint32.from_address(sec + 16).value
+            sz = ctypes.c_uint32.from_address(sec + 8).value
             target = ntdll_base + vir
             src = ctypes.create_string_buffer(sz)
             ctypes.memmove(src, mapped + raw_off, sz)

