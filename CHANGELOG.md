@@ -1,5 +1,26 @@
 # Changelog
 
+## [3.5.0] — 2026-08-06
+
+### Added
+- **Syscall direct invocation** (`stealth/syscalls.py`) — bypasses EDR userland hooks via direct syscalls
+- **ntdll.dll unhooking** (`stealth/unhook.py`) — hook detection + fresh ntdll reload
+- **ETW patching** (`stealth/etw_patch.py`) — EtwEventWrite patch to silence event tracing
+- **Injection techniques v2** (`stealth/injection_v2.py`) — QueueUserAPC, Early Bird, SetThreadContext
+- **Payload generation** (`server/payloads/generate.py`) — HTA, VBS, PS1, BAT, SCT stager output
+- **UDP transport** (`common/udp_protocol.py`) — UDP C2 with session tracking
+- **PTY shell** (`shell_pty.py`) — interactive PTY-based shell session
+- **SAM hive dump** (`credentials/sam_dump.py`) — SAM/SYSTEM/SECURITY registry hive extraction
+- **Browser credentials v2** (`credentials/browser_v2.py`) — Firefox, Opera, Edge credential extraction
+- **Screenshot streaming** (`surveillance/stream.py`) — continuous screenshot stream to server
+- **C implant v2** (`c-implant/agent.c`) — expanded to 20 commands (keylogger, persistence, screenshot, b64 download/upload)
+
+### Changed
+- Command count: **65** (8 new commands added)
+- Test suite: **29 tests passing** (14 new tests added)
+- All **60+ modules** verified importable
+- Updated STATUS.md — all new modules listed, c-implant v2 reflected
+
 ## [3.4.0] — 2026-08-05
 
 ### Added
