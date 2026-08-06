@@ -4,10 +4,13 @@ non-ntdll memory.  The built stub movs r10←rcx, sets eax←SSN, then jmps to
 the ``syscall; ret`` that already lives inside ntdll.dll.
 """
 import os
+import ctypes
+import struct
+from ctypes import wintypes
 
-if os.name != 'nt':
-    raise ImportError('Windows-only module')
-
+MEM_COMMIT = 0x1000
+MEM_RESERVE = 0x2000
+PAGE_EXECUTE_READWRITE = 0x40
 import ctypes
 import struct
 from ctypes import wintypes

