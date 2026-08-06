@@ -1,0 +1,40 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install ruff && ruff check . --ignore=F841,E402,F401 --select=E,F,W
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: pip install -r requirements.txt && python3 -m pytest tests/ -v
+
+  build-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: gcc -O2 -s -o c-implant/agent_linux c-implant/agent.c -lpthread
+      - uses: actions/upload-artifact@v4
+        with: {name: agent-linux, path: c-implant/agent_linux}
+
+  build-agent-win:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq mingw-w64
+      - run: x86_64-w64-mingw32-gcc -O2 -s -o c-implant/agent.exe c-implant/agent.c -lws2_32
+      - uses: actions/upload-artifact@v4
+        with: {name: agent-windows, path: c-implant/agent.exe}

